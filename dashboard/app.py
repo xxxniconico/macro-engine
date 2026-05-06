@@ -113,6 +113,44 @@ st.markdown("---")
 st.subheader("📦 数据覆盖")
 st.text(f"{get_indicator_count()}种指标 | 短期/长期/帝国 100% | 新浪V5 + World Bank + 东方财富")
 
+# ═══ 因果链条 ═══
+st.markdown("---")
+st.subheader("⛓️ 因果链条推演")
+from engine.causal_chain import detect_triggers, traverse as causal_traverse, CAUSAL_GRAPH
+triggers = detect_triggers()
+if triggers:
+    st.info(f"**已触发种子事件：** {', '.join(CAUSAL_GRAPH[t]['label'] for t in triggers)}")
+    timeline = causal_traverse(triggers)
+    future_events = [e for e in timeline if e["expected_month"] > 0]
+    if future_events:
+        for e in future_events[:8]:
+            chain_str = " → ".join(CAUSAL_GRAPH.get(n, {}).get("label", n) for n in e["chain"])
+            st.markdown(f"`T+{e['expected_month']:<4}` **{e['label']}**  ← {chain_str}")
+    else:
+        st.caption("当前触发事件尚无下游传导")
+else:
+    st.caption("当前无已触发因果链种子事件")
+
+# ═══ 压力测试 ═══
+st.markdown("---")
+st.subheader("⚠️ 反向压力测试")
+from engine.stress_test import monitor as stress_monitor
+stress = stress_monitor()
+st.caption("极端场景前置条件监控 | 激活度>40% 需关注")
+
+cols = st.columns(3)
+sorted_stress = sorted(stress.values(), key=lambda x: x["activation_pct"], reverse=True)
+for i, s in enumerate(sorted_stress[:6]):
+    with cols[i % 3]:
+        severity_icon = {"extreme": "💀", "severe": "🔴", "moderate": "🟡"}.get(s["severity"], "⚪")
+        st.markdown(f"""
+        <div style="background:#1e1e2e;border-left:4px solid {s['color']};border-radius:8px;padding:10px;margin-bottom:8px;">
+            <strong>{severity_icon} {s['label']}</strong> [{s['severity']}]<br>
+            <span style="color:{s['color']};font-size:1.2em">{s['activation_pct']}%</span> <small>{s['met_count']}/{s['total_count']} 条件</small><br>
+            <small style="color:#888">{s['description'][:60]}...</small>
+        </div>
+        """, unsafe_allow_html=True)
+
 # ═══ 图表 ═══
 st.markdown("---")
 conn = sqlite3.connect(str(Path(__file__).parent.parent / "macro.db"))
