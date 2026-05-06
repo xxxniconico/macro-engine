@@ -360,6 +360,134 @@ SCENARIOS = {
         },
         "description": "国家级网络攻击 → 金融基础设施瘫痪 → SWIFT/支付系统中断 → 现金回归 → 全球市场冻结",
     },
+
+    # ═══ 战争场景 ═══
+
+    "south_china_sea_conflict": {
+        "label": "南海军事冲突",
+        "severity": "extreme",
+        "preconditions": [
+            ("us_political_polarization", ">", 80),
+            ("china_pmi", "<", 49),
+            ("usd_reserve_share", "<", 55),
+            ("naval_incident_count", ">", 5),
+        ],
+        "assumed_impact": {
+            "shipping": "全球 30% 海运中断",
+            "oil": "油价飙至 $200+",
+            "semiconductor": "芯片供应链断裂",
+            "insurance": "战争险费率暴涨 50 倍",
+        },
+        "description": "南海撞船/撞机 → 军事对峙升级 → 海上封锁 → 全球贸易断崖 → 能源/芯片危机",
+    },
+
+    "korean_peninsula_war": {
+        "label": "朝鲜半岛战争",
+        "severity": "extreme",
+        "preconditions": [
+            ("china_pmi", "<", 48),
+            ("us_political_polarization", ">", 85),
+            ("nk_provocation_index", ">", 90),
+            ("us_forces_korea_alert", ">", 3),
+        ],
+        "assumed_impact": {
+            "seoul": "首尔 24h 内遭受炮击",
+            "semiconductor": "全球存储芯片断供 70%",
+            "china": "中国被迫卷入",
+            "markets": "亚太股市 -50%，全球 -30%",
+        },
+        "description": "朝鲜第七次核试验+ICBM → 美韩先发制人打击 → 首尔毁灭性炮击 → 中美被迫介入",
+    },
+
+    "middle_east_full_war": {
+        "label": "中东全面战争",
+        "severity": "extreme",
+        "preconditions": [
+            ("us_uso", ">", 150),
+            ("us_vixy", ">", 30),
+            ("strait_of_hormuz_threat", ">", 80),
+            ("me_conflict_countries", ">", 4),
+        ],
+        "assumed_impact": {
+            "oil": "油价 $250+ → 全球经济衰退",
+            "horman": "霍尔木兹海峡封锁",
+            "gold": "金价 $7000+",
+            "refugees": "千万级难民潮冲击欧洲",
+        },
+        "description": "伊朗-以色列全面开战 → 霍尔木兹封锁 → 沙特油田遭袭 → 全球石油供应缺口 20%",
+    },
+
+    "russia_nato_direct": {
+        "label": "俄-北约直接冲突",
+        "severity": "extreme",
+        "preconditions": [
+            ("nato_article5_trigger", ">", 70),
+            ("russia_mobilization_level", ">", 80),
+            ("baltic_incident_count", ">", 3),
+            ("us_troops_europe", ">", 150000),
+        ],
+        "assumed_impact": {
+            "nuclear_risk": "核升级风险 30-50%",
+            "europe": "欧洲大陆战争",
+            "energy": "欧洲能源彻底断供",
+            "markets": "全球市场熔断式暴跌",
+        },
+        "description": "波罗的海擦枪走火 → 北约第五条触发 → 常规战争 → 核升级临界点 → 1962 年以来最危险",
+    },
+
+    "india_pakistan_brink": {
+        "label": "印巴核边缘",
+        "severity": "extreme",
+        "preconditions": [
+            ("kashmir_incident_count", ">", 5),
+            ("india_pakistan_troop_level", ">", 80),
+            ("terror_attack_casualties", ">", 200),
+            ("nuclear_rhetoric_level", ">", 85),
+        ],
+        "assumed_impact": {
+            "nuclear": "战术核武器首次实战使用",
+            "asia": "南亚核冬天风险",
+            "global": "全球核禁忌打破",
+            "markets": "全球市场恐慌性抛售",
+        },
+        "description": "克什米尔恐袭 → 印度越境打击 → 巴基斯坦战术核武 → 全球核禁忌被打破",
+    },
+
+    "energy_chokepoint_blockade": {
+        "label": "能源航道封锁",
+        "severity": "severe",
+        "preconditions": [
+            ("us_uso", ">", 140),
+            ("us_vixy", ">", 25),
+            ("naval_tension_index", ">", 70),
+            ("insurance_war_risk", ">", 10),
+        ],
+        "assumed_impact": {
+            "oil": "霍尔木兹/马六甲封锁 → 油价 $300+",
+            "lng": "全球 LNG 断供",
+            "economy": "全球 GDP 骤降 5-8%",
+            "navy": "多国海军护航 → 擦枪走火风险",
+        },
+        "description": "地缘冲突升级 → 关键航道封锁 → 能源运输中断 → 全球工业停摆 → 军事护航 → 冲突扩大",
+    },
+
+    "global_war_alliance": {
+        "label": "全球阵营化战争",
+        "severity": "extreme",
+        "preconditions": [
+            ("usd_reserve_share", "<", 50),
+            ("us_political_polarization", ">", 90),
+            ("china_debt_gdp", ">", 310),
+            ("active_conflict_theaters", ">", 3),
+        ],
+        "assumed_impact": {
+            "ww3_risk": "第三次世界大战风险 20-30%",
+            "economy": "全球经济分裂为两大阵营",
+            "trade": "贸易额暴跌 60%",
+            "gold": "金本位回归讨论",
+        },
+        "description": "多战区同时爆发 → 中美全面对抗 → 全球分裂为两大阵营 → 类似 1930s 格局 → 秩序重组",
+    },
 }
 
 
@@ -404,6 +532,22 @@ def _get_indicator(snap: dict, name: str) -> Optional[float]:
         "pension_funding_gap": [],
         "cyber_incident_count": [],
         "us_sp500": ["us_sp500"],
+        "naval_incident_count": [],
+        "nk_provocation_index": [],
+        "us_forces_korea_alert": [],
+        "strait_of_hormuz_threat": [],
+        "me_conflict_countries": [],
+        "nato_article5_trigger": [],
+        "russia_mobilization_level": [],
+        "baltic_incident_count": [],
+        "us_troops_europe": [],
+        "kashmir_incident_count": [],
+        "india_pakistan_troop_level": [],
+        "terror_attack_casualties": [],
+        "nuclear_rhetoric_level": [],
+        "naval_tension_index": [],
+        "insurance_war_risk": [],
+        "active_conflict_theaters": [],
     }
 
     for alias in aliases.get(name, [name]):
