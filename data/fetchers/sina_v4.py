@@ -49,7 +49,6 @@ try:
     d = parse(fetch("hf_XAU"))
     if "hf_XAU" in d and len(d["hf_XAU"]) > 0:
         save("gold", float(d["hf_XAU"][0])); saved += 1
-        save("gold_prev", float(d["hf_XAU"][7])); saved += 1
         print(f"  ✓ gold={d['hf_XAU'][0]} 昨收={d['hf_XAU'][7]}")
 except Exception as e: print(f"  ✗ gold: {e}")
 

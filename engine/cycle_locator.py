@@ -72,7 +72,7 @@ def locate_long_term(snapshot: dict) -> dict:
     debt = snapshot.get("china_debt_gdp", {}).get("value")
     real_rate = snapshot.get("china_real_rate", {}).get("value")
     gold = snapshot.get("gold", {}).get("value")
-    gold_prev = snapshot.get("gold_prev", {}).get("value")
+    gold_1y = snapshot.get("gold_1y_reference", {}).get("value")
 
     if debt is not None:
         w = 0.5; tw += w
@@ -88,10 +88,10 @@ def locate_long_term(snapshot: dict) -> dict:
         elif real_rate > 3:   score += w*-0.3; sig["real"]=f"高({real_rate:.1f}%)"
         else:                 score += w*0.3;  sig["real"]=f"适中({real_rate:.1f}%)"
 
-    # 黄金年涨幅 → 货币信心代理
-    if gold and gold_prev and gold_prev > 0:
+    # 黄金年涨幅 → 货币信心代理（用 1 年前参考价，非昨日收盘）
+    if gold and gold_1y and gold_1y > 0:
         w = 0.2; tw += w
-        change = (gold - gold_prev) / gold_prev * 100
+        change = (gold - gold_1y) / gold_1y * 100
         if change > 30:    score += w*-0.7; sig["gold_yr"]=f"暴涨({change:.0f}%)"
         elif change > 15:  score += w*-0.4; sig["gold_yr"]=f"涨({change:.0f}%)"
         elif change < -10: score += w*0.3;  sig["gold_yr"]=f"跌({change:.0f}%)"

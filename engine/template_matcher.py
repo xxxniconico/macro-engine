@@ -24,7 +24,7 @@ FEATURES = [
     ("real_rate",       ["us_real_rate", "china_real_rate"],          -5,    8,  1.5),
     ("unemployment",    ["china_unemployment", "us_unemployment"],     3,   15,  9.0),
     ("equity_1y",       ["us_sp500", "china_sh_index"],              -50,   50,  0.0),
-    ("gold_1y",         ["gold", "gold_prev"],                       -30,   50, 10.0),
+    ("gold_1y",         ["gold", "gold_1y_reference"],               -30,   50, 10.0),
     ("policy_rate",     ["us_fed_rate"],                               0,   15,  7.5),
     ("reserve_status",  ["usd_reserve_share"],                        40,   70, 55.0),
     ("polarization",    ["us_political_polarization"],                40,   90, 65.0),
@@ -63,12 +63,12 @@ def extract_features(snapshot: dict) -> tuple[np.ndarray, np.ndarray]:
                 value = entry["value"]
                 break
 
-        # 特殊处理: gold_1y = (gold - gold_prev) / gold_prev * 100
+        # 特殊处理: gold_1y = (gold - gold_1y_reference) / gold_1y_reference * 100
         if name == "gold_1y":
             gold_now = snapshot.get("gold", {}).get("value")
-            gold_prev = snapshot.get("gold_prev", {}).get("value")
-            if gold_now and gold_prev and gold_prev > 0:
-                value = (gold_now - gold_prev) / gold_prev * 100
+            gold_ref = snapshot.get("gold_1y_reference", {}).get("value")
+            if gold_now and gold_ref and gold_ref > 0:
+                value = (gold_now - gold_ref) / gold_ref * 100
             else:
                 value = None
 
