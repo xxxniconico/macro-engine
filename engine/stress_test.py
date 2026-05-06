@@ -256,6 +256,110 @@ SCENARIOS = {
         },
         "description": "BRICS 贸易结算去美元化 → 央行购金潮 → 美元储备份额加速下降",
     },
+
+    # ═══ 第三批 ═══
+
+    "derivatives_crisis": {
+        "label": "衍生品/掉期爆雷",
+        "severity": "extreme",
+        "preconditions": [
+            ("us_yield_curve", "<", 0.88),
+            ("us_vixy", ">", 30),
+            ("us_fed_rate", ">", 4),
+            ("us_sp500", ">", 7000),
+        ],
+        "assumed_impact": {
+            "contagion": "类似 LTCM 1998 ×10",
+            "counterparty": "大行违约连锁反应",
+            "fed": "被迫大规模注入流动性",
+        },
+        "description": "高利率+高杠杆+波动率突升 → 掉期/衍生品保证金链断裂 → 系统性冲击",
+    },
+
+    "carbon_bubble": {
+        "label": "碳泡沫破裂",
+        "severity": "moderate",
+        "preconditions": [
+            ("us_uso", "<", 130),
+            ("carbon_price", ">", 100),
+            ("esg_flows", "<", -10),
+            ("us_sp500", "<", 5000),
+        ],
+        "assumed_impact": {
+            "energy_stocks": "化石能源股 -40-60%",
+            "stranded_assets": "万亿美元搁浅资产",
+            "transition": "能源转型加速 vs 石油国崩溃",
+        },
+        "description": "碳定价+ESG撤资 → 化石能源搁浅资产 → 石油出口国财政危机 → 地缘重组",
+    },
+
+    "china_capital_flight": {
+        "label": "中国资本外逃",
+        "severity": "severe",
+        "preconditions": [
+            ("china_debt_gdp", ">", 290),
+            ("china_pmi", "<", 49),
+            ("china_cpi", "<", 0),
+            ("us_uup", ">", 28),
+        ],
+        "assumed_impact": {
+            "cny": "人民币贬破 8.5",
+            "hk": "港币联系汇率承压",
+            "controls": "资本管制全面升级",
+        },
+        "description": "经济信心恶化 → 富人/企业转移资产 → 外汇储备骤降 → 资本管制 → 外资撤离加速",
+    },
+
+    "european_fragmentation": {
+        "label": "欧洲碎片化危机",
+        "severity": "severe",
+        "preconditions": [
+            ("eurozone_debt_gdp", ">", 100),
+            ("eurozone_unemployment", ">", 9),
+            ("eurozone_political_fragmentation", ">", 70),
+            ("ecb_rate", ">", 3),
+        ],
+        "assumed_impact": {
+            "italy": "意大利 BTP-Bund 利差 >400bp",
+            "euro": "欧元跌至 0.85",
+            "eu": "欧盟解体讨论再起",
+        },
+        "description": "高债务+高利率+民粹 → 南欧债务危机重演 → 欧元区生存危机",
+    },
+
+    "pension_crisis": {
+        "label": "养老金偿付危机",
+        "severity": "severe",
+        "preconditions": [
+            ("us_fed_rate", ">", 3),
+            ("us_demographic_ratio", "<", 2.5),
+            ("pension_funding_gap", ">", 30),
+            ("us_yield_curve", "<", 0.90),
+        ],
+        "assumed_impact": {
+            "public_pensions": "州/市养老金破产",
+            "muni_bonds": "市政债暴跌",
+            "social_contract": "退休年龄被迫推迟",
+        },
+        "description": "低利率+老龄化+给付刚性 → 养老金缺口暴露 → 政府被迫削减福利 → 社会契约危机",
+    },
+
+    "cyber_financial_warfare": {
+        "label": "网络金融战",
+        "severity": "extreme",
+        "preconditions": [
+            ("us_political_polarization", ">", 80),
+            ("geopolitical_tension_index", ">", 75),
+            ("us_vixy", ">", 25),
+            ("cyber_incident_count", ">", 10),
+        ],
+        "assumed_impact": {
+            "markets": "交易所被迫暂停",
+            "banks": "支付系统瘫痪",
+            "trust": "数字金融信心崩塌",
+        },
+        "description": "国家级网络攻击 → 金融基础设施瘫痪 → SWIFT/支付系统中断 → 现金回归 → 全球市场冻结",
+    },
 }
 
 
@@ -290,6 +394,16 @@ def _get_indicator(snap: dict, name: str) -> Optional[float]:
         "us_institutional_trust": [],
         "us_social_unrest_index": [],
         "brics_trade_share": [],
+        "carbon_price": [],
+        "esg_flows": [],
+        "eurozone_debt_gdp": [],
+        "eurozone_unemployment": [],
+        "eurozone_political_fragmentation": [],
+        "ecb_rate": [],
+        "us_demographic_ratio": [],
+        "pension_funding_gap": [],
+        "cyber_incident_count": [],
+        "us_sp500": ["us_sp500"],
     }
 
     for alias in aliases.get(name, [name]):
