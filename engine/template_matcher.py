@@ -112,24 +112,67 @@ def match(current_vec, current_mask, templates: list[dict]) -> list[dict]:
         if isinstance(v, dict):
             raw_values = v.get("values", [])
             raw_mask = v.get("mask", [1]*len(FEATURES))
+            crisis_type = v.get("crisis_type", "")
+            path = v.get("path", {})
         else:
             raw_values = v
             raw_mask = t.get("mask", [1]*len(FEATURES))
+            crisis_type = ""
+            path = {}
         tv = np.array(raw_values, dtype=np.float32)
         tm = np.array(raw_mask, dtype=np.float32)
         sim = masked_cosine(current_vec, current_mask, tv, tm)
         overlap = int((current_mask * tm).sum())
         results.append({
-            "name":        t["name"],
-            "country":     t.get("country", ""),
-            "period":      t.get("period", ""),
-            "similarity":  round(sim, 4),
-            "overlap":     overlap,
-            "outcome":     t.get("outcome_summary", ""),
+            "name":         t["name"],
+            "country":      t.get("country", ""),
+            "period":       t.get("period", ""),
+            "similarity":   round(sim, 4),
+            "overlap":      overlap,
+            "outcome":      t.get("outcome_summary", ""),
+            "crisis_type":  crisis_type,
+            "path":         path,
         })
 
     results.sort(key=lambda x: x["similarity"], reverse=True)
     return results[:5]
+
+
+def predict_path(matches: list[dict]) -> dict:
+    """基于 Top 匹配的相似度加权，预测 6/12/24 个月路径。"""
+    sim_sum = sum(m["similarity"] for m in matches if m["similarity"] > 0)
+    if sim_sum == 0:
+        return {"6m": "数据不足", "12m": "数据不足", "24m": "数据不足"}
+
+    predictions = {"6m": [], "12m": [], "24m": [], "dominant_type": ""}
+
+    # 统计主导危机类型
+    type_counts = {}
+    for m in matches:
+        ct = m.get("crisis_type", "")
+        if ct:
+            type_counts[ct] = type_counts.get(ct, 0) + m["similarity"]
+    if type_counts:
+        predictions["dominant_type"] = max(type_counts, key=type_counts.get)
+
+    for horizon in ["6m", "12m", "24m"]:
+        weighted = []
+        for m in matches:
+            p = m.get("path", {})
+            desc = p.get(horizon, "")
+            if desc and m["similarity"] > 0:
+                weight = m["similarity"] / sim_sum
+                weighted.append((desc, weight, m["similarity"]))
+        if weighted:
+            top = sorted(weighted, key=lambda x: x[1], reverse=True)
+            pred = f"[主导] {top[0][0]}"
+            if len(top) > 1 and top[1][1] > 0.2:
+                pred += f" | [次] {top[1][0]}"
+            predictions[horizon] = pred
+        else:
+            predictions[horizon] = "无可用路径"
+
+    return predictions
 
 
 def run_matcher(date_str: str = None) -> dict:
@@ -159,6 +202,7 @@ def run_matcher(date_str: str = None) -> dict:
         }
 
     matches = match(current_vec, current_mask, templates)
+    path_pred = predict_path(matches)
 
     return {
         "date": date_str or date.today().isoformat(),
@@ -167,6 +211,7 @@ def run_matcher(date_str: str = None) -> dict:
         "feature_names": FEATURE_NAMES,
         "current_features": current_vec.tolist(),
         "matches": matches,
+        "path_prediction": path_pred,
     }
 
 
@@ -193,11 +238,18 @@ def format_report(result: dict) -> str:
         bar = "▓" * int(sim_pct // 5) + "░" * (20 - int(sim_pct // 5))
         emoji = "🟢" if sim_pct > 70 else ("🟡" if sim_pct > 40 else "🔴")
         lines.append(f"  #{i} {emoji} {m['name']}")
-        lines.append(f"      {m['country']} | {m['period']}")
+        lines.append(f"      {m['country']} | {m['period']} | {m.get('crisis_type','')}")
         lines.append(f"      相似度: {sim_pct:.1f}% {bar}  (重叠 {m['overlap']} 维)")
         if m["outcome"]:
             lines.append(f"      结果: {m['outcome']}")
         lines.append("")
+
+    # 路径预测
+    pp = result.get("path_prediction", {})
+    if pp and pp.get("dominant_type"):
+        lines.append(f"  ═══ 路径预测 (主导危机: {pp['dominant_type']}) ═══")
+        for h in ["6m", "12m", "24m"]:
+            lines.append(f"  {h}: {pp.get(h, 'N/A')}")
 
     return "\n".join(lines)
 
