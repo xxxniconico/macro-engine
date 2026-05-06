@@ -138,10 +138,10 @@ from engine.stress_test import monitor as stress_monitor
 stress = stress_monitor()
 st.caption("极端场景前置条件监控 | 激活度>40% 需关注")
 
-cols = st.columns(3)
+cols = st.columns(4)
 sorted_stress = sorted(stress.values(), key=lambda x: x["activation_pct"], reverse=True)
-for i, s in enumerate(sorted_stress[:6]):
-    with cols[i % 3]:
+for i, s in enumerate(sorted_stress[:12]):
+    with cols[i % 4]:
         severity_icon = {"extreme": "💀", "severe": "🔴", "moderate": "🟡"}.get(s["severity"], "⚪")
         st.markdown(f"""
         <div style="background:#1e1e2e;border-left:4px solid {s['color']};border-radius:8px;padding:10px;margin-bottom:8px;">

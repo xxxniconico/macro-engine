@@ -107,7 +107,7 @@ SCENARIOS = {
         "severity": "moderate",
         "preconditions": [
             ("us_unemployment", ">", 6),
-            ("technology_adoption_rate", ">", 80),  # 主观指标
+            ("technology_adoption_rate", ">", 80),
             ("income_inequality_gini", ">", 0.45),
         ],
         "assumed_impact": {
@@ -116,6 +116,145 @@ SCENARIOS = {
             "markets": "科技股先涨后跌",
         },
         "description": "AI 替代白领工作 → 结构性失业 → 社会契约重写",
+    },
+
+    # ═══ 新增场景 ═══
+
+    "commercial_real_estate_crash": {
+        "label": "商业地产崩盘",
+        "severity": "severe",
+        "preconditions": [
+            ("us_yield_curve", "<", 0.92),
+            ("us_unemployment", ">", 5),
+            ("us_fed_rate", ">", 4),
+            ("us_vixy", ">", 30),
+        ],
+        "assumed_impact": {
+            "cre_prices": "-30-50%（办公楼估值）",
+            "regional_banks": "中小银行倒闭潮",
+            "stocks": "REITs -50%，金融股 -30%",
+        },
+        "description": "远程办公+高利率+再融资墙 → 商业地产估值暴跌 → 区域银行危机",
+    },
+
+    "china_shadow_banking_crisis": {
+        "label": "中国影子银行危机",
+        "severity": "severe",
+        "preconditions": [
+            ("china_debt_gdp", ">", 290),
+            ("china_pmi", "<", 49),
+            ("china_shadow_banking_npl", ">", 8),
+            ("china_trust_defaults", ">", 3),
+        ],
+        "assumed_impact": {
+            "wealth_products": "理财赎回潮",
+            "local_banks": "城商行挤兑风险",
+            "contagion": "港/A股联动暴跌",
+        },
+        "description": "信托违约 → 理财产品亏损 → 零售投资者恐慌 → 中小银行流动性危机",
+    },
+
+    "fed_policy_error": {
+        "label": "美联储政策错误",
+        "severity": "severe",
+        "preconditions": [
+            ("us_cpi", ">", 3),
+            ("us_unemployment", ">", 4.5),
+            ("us_yield_curve", "<", 0.90),
+            ("us_vixy", ">", 25),
+        ],
+        "assumed_impact": {
+            "recession": "2026 H2 衰退概率>60%",
+            "fed": "被迫紧急降息+重启QE",
+            "credibility": "Fed 信誉严重受损",
+        },
+        "description": "降息太晚/太慢 → 硬着陆 → 滞胀型衰退 → 央行信誉危机",
+    },
+
+    "us_china_financial_decoupling": {
+        "label": "美中金融脱钩",
+        "severity": "extreme",
+        "preconditions": [
+            ("usd_reserve_share", "<", 55),
+            ("us_political_polarization", ">", 80),
+            ("em_eem", "<", 55),
+            ("us_uup", ">", 28),
+        ],
+        "assumed_impact": {
+            "cn_stocks": "中概股退市 -40%",
+            "trade": "全面金融制裁",
+            "globalization": "两个平行金融体系",
+        },
+        "description": "金融制裁升级 → 资本账户冻结 → SWIFT 替代 → 全球金融体系分裂",
+    },
+
+    "taiwan_strait_crisis": {
+        "label": "台海地缘危机",
+        "severity": "extreme",
+        "preconditions": [
+            ("china_pmi", "<", 48),
+            ("china_unemployment", ">", 6),
+            ("us_political_polarization", ">", 85),
+            ("geopolitical_tension_index", ">", 90),
+        ],
+        "assumed_impact": {
+            "semiconductor": "全球芯片断供",
+            "shipping": "太平洋航线瘫痪",
+            "markets": "全球股市 -20-40%",
+            "gold": "金价冲击$6000+",
+        },
+        "description": "台海军事升级 → 半导体断供 → 全球供应链崩溃 → 军事对抗",
+    },
+
+    "global_food_energy_crisis": {
+        "label": "全球粮食能源危机",
+        "severity": "severe",
+        "preconditions": [
+            ("us_cpi", ">", 5),
+            ("us_uso", ">", 160),
+            ("em_eem", "<", 55),
+            ("geopolitical_conflict_count", ">", 5),
+        ],
+        "assumed_impact": {
+            "food": "粮价翻倍，新兴市场饥荒",
+            "energy": "油价$150+",
+            "politics": "多国政府倒台",
+        },
+        "description": "气候灾害+地缘冲突+出口禁令 → 粮/能价格飙升 → 新兴市场社会动荡",
+    },
+
+    "us_constitutional_crisis": {
+        "label": "美国宪政危机",
+        "severity": "extreme",
+        "preconditions": [
+            ("us_political_polarization", ">", 85),
+            ("us_wealth_gap", ">", 0.45),
+            ("us_institutional_trust", "<", 30),
+            ("us_social_unrest_index", ">", 70),
+        ],
+        "assumed_impact": {
+            "governance": "政府功能瘫痪",
+            "dollar": "美元信心崩塌",
+            "civil_order": "大规模社会动荡",
+        },
+        "description": "政治极化临界点 → 制度失效 → 宪政危机 → Dalio 30-40%内战概率场景",
+    },
+
+    "brics_currency_challenge": {
+        "label": "金砖货币挑战",
+        "severity": "moderate",
+        "preconditions": [
+            ("usd_reserve_share", "<", 58),
+            ("gold", ">", 4500),
+            ("em_eem", ">", 65),
+            ("brics_trade_share", ">", 40),
+        ],
+        "assumed_impact": {
+            "dollar_demand": "全球储备需求结构性下降",
+            "gold": "央行购金加速",
+            "multipolar": "多极货币体系成形",
+        },
+        "description": "BRICS 贸易结算去美元化 → 央行购金潮 → 美元储备份额加速下降",
     },
 }
 
@@ -138,7 +277,19 @@ def _get_indicator(snap: dict, name: str) -> Optional[float]:
         "us_unemployment": ["us_unemployment"],
         "us_cpi": ["us_cpi"],
         "gold": ["gold"],
-        "technology_adoption_rate": [],  # 暂无数据
+        "technology_adoption_rate": [],
+        "us_fed_rate": ["us_fed_rate"],
+        "us_vixy": ["us_vixy"],
+        "us_uup": ["us_uup"],
+        "em_eem": ["em_eem"],
+        "us_uso": ["us_uso"],
+        "china_shadow_banking_npl": [],
+        "china_trust_defaults": [],
+        "geopolitical_tension_index": [],
+        "geopolitical_conflict_count": [],
+        "us_institutional_trust": [],
+        "us_social_unrest_index": [],
+        "brics_trade_share": [],
     }
 
     for alias in aliases.get(name, [name]):
