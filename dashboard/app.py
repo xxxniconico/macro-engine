@@ -151,6 +151,57 @@ for i, s in enumerate(sorted_stress[:12]):
         </div>
         """, unsafe_allow_html=True)
 
+# ═══ P2: 叙事 + 博弈 + 系统动力 ═══
+st.markdown("---")
+st.subheader("🧠 P2: 叙事·博弈·系统动力")
+
+tab_n, tab_g, tab_s = st.tabs(["📰 叙事分析", "🎯 多方博弈", "🔄 系统动力"])
+
+with tab_n:
+    from engine.narrative import analyze as narrative_analyze
+    narratives = narrative_analyze()
+    if narratives:
+        for n in narratives[:6]:
+            bar_len = int(n["strength"] * 20)
+            bar = "█" * bar_len + "░" * (20 - bar_len)
+            risk_icon = {"positive": "🟢", "warning": "🟡", "danger": "🔴"}.get(n["risk"], "⚪")
+            st.markdown(f"{risk_icon} **{n['theme']}** `{n['strength']:.0%}` {bar}")
+            with st.expander(f"详情: {n['theme']}"):
+                st.caption(f"描述: {n['description']}")
+                st.caption(f"⚠ 反转信号: {n['peak_signal']}")
+                st.caption(f"💡 反叙事: {n['contra_narrative']}")
+        high = [n for n in narratives if n["strength"] > 0.7]
+        if high:
+            st.warning(f"🚨 过度共识: {', '.join(n['theme'] for n in high)}")
+
+with tab_g:
+    from engine.game_theory import analyze as game_analyze, get_net_effects
+    players = game_analyze()
+    for p in players:
+        st.metric(p["player"], f"{p['status']} · {p['bias']}")
+    st.markdown("---")
+    st.caption("**博弈净效应**")
+    for e in get_net_effects():
+        st.caption(e)
+
+with tab_s:
+    from engine.system_dynamics import analyze as sys_analyze
+    sd = sys_analyze()
+    st.metric("系统状态", sd["criticality"])
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**🔺 放大器**")
+        for l in sd["active_positive"]:
+            st.warning(f"⚠ {l['label']}: {l['description']}")
+    with c2:
+        st.markdown("**🛡️ 稳定器**")
+        for s_loop in sd["all_stabilizers"]:
+            health = s_loop.get("health", "unknown")
+            icon = {"healthy": "🟢", "available": "🟡", "fragile": "🔴"}.get(health, "⚪")
+            st.caption(f"{icon} {s_loop['label']}: {health}")
+    if sd["n_pos"] >= 3 and sd["n_healthy_stabilizers"] < 2:
+        st.error("🚨 Dalio最警惕：当稳定器失效，只剩放大器运行 = 系统性崩溃前兆")
+
 # ═══ 图表 ═══
 st.markdown("---")
 conn = sqlite3.connect(str(Path(__file__).parent.parent / "macro.db"))
