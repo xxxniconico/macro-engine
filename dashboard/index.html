@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dalio 宏观协同总指挥 V7</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ═══════════ Sentry Dark Theme ═══════════ */
+:root {
+  --bg-primary: #1f1633;
+  --bg-deeper: #150f23;
+  --bg-card: rgba(31, 22, 51, 0.85);
+  --border: #362d59;
+  --border-light: #584674;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --text-muted: #8b8ba0;
+  --accent-purple: #6a5fc1;
+  --accent-muted: #79628c;
+  --accent-lime: #c2ef4e;
+  --accent-coral: #ffb287;
+  --accent-pink: #fa7faa;
+  --danger: #ff4757;
+  --warning: #ffd93d;
+  --success: #6bcb77;
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 30px rgba(106,95,193,0.15);
+  --radius: 8px;
+  --radius-lg: 13px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+.container { max-width:1400px; margin:0 auto; padding:20px 24px; }
+
+/* Header */
+.header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:20px;
+  flex-wrap:wrap; gap:12px;
+}
+.header h1 { font-size:1.6rem; font-weight:700; letter-spacing:-0.5px; }
+.header .phase-badge {
+  background: var(--accent-muted); color:var(--text-primary);
+  padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.header .risk-badge {
+  padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600;
+}
+
+/* Top metrics row */
+.metrics-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px; margin-bottom:20px; }
+.metric-card {
+  background:rgba(31,22,51,0.7); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+  transition:border-color 0.2s;
+}
+.metric-card:hover { border-color:var(--accent-purple); }
+.metric-card .label { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.metric-card .value { font-size:1.4rem; font-weight:700; }
+.metric-card .sub { font-size:0.8rem; color:var(--text-muted); margin-top:2px; }
+
+/* Section */
+.section { margin-bottom:24px; }
+.section-title {
+  font-size:0.78rem; text-transform:uppercase; letter-spacing:1px;
+  color:var(--accent-lime); margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title::before { content:''; width:3px; height:16px; background:var(--accent-lime); border-radius:2px; }
+
+/* Chart containers */
+.chart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px,1fr)); gap:16px; }
+.chart-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+  box-shadow:var(--shadow-card);
+}
+.chart-card h3 { font-size:0.9rem; font-weight:600; margin-bottom:4px; }
+.chart-card .chart-hint { font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; }
+.chart-card canvas { max-height:240px; }
+
+/* Tables */
+.data-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.data-table th {
+  text-align:left; padding:8px 10px; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:0.5px; font-size:0.7rem;
+  border-bottom:1px solid var(--border);
+}
+.data-table td { padding:8px 10px; border-bottom:1px solid rgba(54,45,89,0.5); }
+.data-table tr:hover td { background:rgba(106,95,193,0.08); }
+
+/* Allocation */
+.allocation-bar {
+  display:flex; height:32px; border-radius:6px; overflow:hidden; margin:8px 0;
+}
+.allocation-bar .seg {
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.75rem; font-weight:600; color:#fff; min-width:40px;
+}
+.alloc-equity { background:var(--accent-purple); }
+.alloc-gold { background:var(--accent-coral); }
+.alloc-bonds { background:var(--accent-muted); }
+.alloc-cash { background:var(--border-light); }
+
+/* Risk gauge */
+.risk-gauge {
+  position:relative; width:100%; height:8px; background:linear-gradient(to right, #6bcb77 0%, #ffd93d 40%, #ff6b6b 70%, #ff4757 100%);
+  border-radius:4px; margin:8px 0;
+}
+.risk-gauge .needle {
+  position:absolute; top:-4px; width:3px; height:16px; background:white; border-radius:2px;
+  transform:translateX(-50%); transition:left 0.5s;
+}
+
+/* Warnings */
+.warning-box {
+  background:rgba(255,71,87,0.12); border:1px solid rgba(255,71,87,0.3);
+  border-radius:var(--radius); padding:12px 16px; margin-bottom:12px;
+  font-size:0.85rem;
+}
+.info-box {
+  background:rgba(106,95,193,0.1); border:1px solid rgba(106,95,193,0.3);
+  border-radius:var(--radius); padding:12px 16px; margin-bottom:12px;
+  font-size:0.85rem;
+}
+
+/* Tabs */
+.tabs { display:flex; gap:0; margin-bottom:16px; border-bottom:1px solid var(--border); }
+.tab-btn {
+  background:none; border:none; color:var(--text-muted); padding:8px 20px;
+  font-family:inherit; font-size:0.82rem; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all 0.2s;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.tab-btn:hover { color:var(--text-primary); }
+.tab-btn.active { color:var(--accent-lime); border-bottom-color:var(--accent-lime); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Responsive */
+@media(max-width:768px) {
+  .header { flex-direction:column; align-items:flex-start; }
+  .chart-grid { grid-template-columns:1fr; }
+  .metrics-row { grid-template-columns:repeat(2,1fr); }
+}
+
+.mono { font-family:'JetBrains Mono', monospace; font-size:0.82rem; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+<div class="header">
+  <div>
+    <h1>🔮 Dalio 宏观协同总指挥</h1>
+    <span style="color:var(--text-muted);font-size:0.8rem">V7 · 6步流程 · 动态权重 · 仓位输出</span>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span id="phase-badge" class="phase-badge">加载中...</span>
+    <span id="risk-badge" class="risk-badge">—</span>
+    <span style="color:var(--text-muted);font-size:0.75rem" id="date-label"></span>
+  </div>
+</div>
+
+<!-- Warning row -->
+<div id="warnings"></div>
+
+<!-- Top metrics: 6-step pipeline -->
+<div class="metrics-row" id="pipeline-metrics"></div>
+
+<!-- Risk gauge + allocation -->
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>⚖️ 动态视角权重</h3>
+    <canvas id="weights-chart" style="max-height:200px"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>💰 仓位配置</h3>
+    <div id="allocation-display"></div>
+    <div style="margin-top:8px">
+      <span style="color:var(--text-muted);font-size:0.75rem">综合风险得分</span>
+      <div style="font-size:2rem;font-weight:700" id="risk-score">—</div>
+      <div class="risk-gauge"><div class="needle" id="risk-needle" style="left:50%"></div></div>
+      <span id="risk-label" style="font-size:0.8rem;color:var(--text-muted)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ Tab: Historical Charts ══════ -->
+<div class="section">
+  <div class="section-title">📈 历史趋势</div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-macro">宏观核心</button>
+    <button class="tab-btn" data-tab="tab-market">市场指标</button>
+    <button class="tab-btn" data-tab="tab-structure">结构变化</button>
+    <button class="tab-btn" data-tab="tab-stress">压力测试</button>
+  </div>
+  
+  <div class="tab-content active" id="tab-macro">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>PMI 制造业</h3><canvas id="chart-pmi"></canvas></div>
+      <div class="chart-card"><h3>CPI 通胀</h3><canvas id="chart-cpi"></canvas></div>
+      <div class="chart-card"><h3>GDP 增速</h3><canvas id="chart-gdp"></canvas></div>
+      <div class="chart-card"><h3>失业率</h3><canvas id="chart-unemp"></canvas></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="tab-market">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>标普500</h3><canvas id="chart-sp500"></canvas></div>
+      <div class="chart-card"><h3>VIX 恐慌指数</h3><canvas id="chart-vix"></canvas></div>
+      <div class="chart-card"><h3>黄金 ($/oz)</h3><canvas id="chart-gold"></canvas></div>
+      <div class="chart-card"><h3>利率曲线 (2Y/10Y)</h3><canvas id="chart-curve"></canvas></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="tab-structure">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>美元储备份额</h3><canvas id="chart-reserve"></canvas></div>
+      <div class="chart-card"><h3>Gini 系数</h3><canvas id="chart-gini"></canvas></div>
+      <div class="chart-card"><h3>Fed 利率</h3><canvas id="chart-fed"></canvas></div>
+      <div class="chart-card"><h3>上证指数</h3><canvas id="chart-sh"></canvas></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="tab-stress">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>压力测试 TOP 场景概率历史</h3><canvas id="chart-stress-hist"></canvas></div>
+      <div class="chart-card"><h3>媒体情绪趋势</h3><canvas id="chart-sentiment"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ Step Details ══════ -->
+<div class="section">
+  <div class="section-title">📋 详细模块</div>
+  
+  <div class="chart-grid">
+    <!-- Causal chains -->
+    <div class="chart-card">
+      <h3>⛓️ 因果链条</h3>
+      <div class="chart-hint" id="causal-summary"></div>
+      <div id="causal-events"></div>
+    </div>
+    
+    <!-- Game theory -->
+    <div class="chart-card">
+      <h3>🎯 博弈终局场景</h3>
+      <div id="game-scenarios"></div>
+      <div style="margin-top:8px;font-size:0.8rem;color:var(--text-muted)" id="game-trajectory"></div>
+    </div>
+    
+    <!-- System dynamics -->
+    <div class="chart-card">
+      <h3>🔄 系统动力</h3>
+      <div class="chart-hint" id="sys-criticality"></div>
+      <div id="stabilizer-bars"></div>
+      <div id="phase-warnings" style="margin-top:8px;font-size:0.8rem"></div>
+    </div>
+    
+    <!-- First principles -->
+    <div class="chart-card">
+      <h3>🧠 第一性原理</h3>
+      <div id="fp-chains"></div>
+    </div>
+  </div>
+  
+  <!-- Stress top risks -->
+  <div class="chart-card" style="margin-top:16px">
+    <h3>⚠️ 压力测试 TOP10</h3>
+    <div class="chart-hint">28场景，公式化sigmoid概率</div>
+    <table class="data-table" id="stress-table">
+      <thead><tr><th>场景</th><th>概率</th><th>等级</th><th>前置条件</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.75rem">
+  Dalio Macro Engine V7 · 10 modules · 567 records · 44 indicators<br>
+  <span id="data-status">加载数据中...</span>
+</div>
+
+</div>
+
+<script>
+/* ═══════════ Load Data ═══════════ */
+let DATA = null;
+
+async function loadData() {
+  try {
+    const resp = await fetch('data.json?' + Date.now());
+    DATA = await resp.json();
+    document.getElementById('data-status').textContent = 
+      `数据: ${DATA.generated_at} · ${Object.keys(DATA.time_series).length}指标 · 实时`;
+    renderAll();
+  } catch(e) {
+    document.getElementById('data-status').textContent = '⚠️ 数据加载失败: ' + e.message;
+  }
+}
+
+/* ═══════════ Chart Helpers ═══════════ */
+function getSeries(keys) {
+  for (const k of keys) {
+    if (DATA.time_series[k]) return DATA.time_series[k];
+  }
+  return [];
+}
+
+function makeLineChart(canvasId, datasets, title) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: datasets.map((d,i) => ({
+        label: d.label,
+        data: d.data.map(p => ({x: p[0], y: p[1]})),
+        borderColor: d.color || ['#6a5fc1','#c2ef4e','#ffb287','#fa7faa','#6bcb77'][i%5],
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.1,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#e5e7eb', font: { size:10 }, boxWidth:12, padding:8 } } },
+      scales: {
+        x: { type:'time', time:{unit:'month',displayFormats:{month:'MMM yy'}}, 
+             ticks:{color:'#8b8ba0',font:{size:9}}, grid:{color:'rgba(54,45,89,0.3)'} },
+        y: { ticks:{color:'#8b8ba0',font:{size:9}}, grid:{color:'rgba(54,45,89,0.3)'} }
+      },
+      interaction: { intersect:false, mode:'index' }
+    }
+  });
+}
+
+function makeBarChart(canvasId, labels, values, colors, horizontal) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors || '#6a5fc1',
+        borderRadius: 4,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks:{color:'#8b8ba0',font:{size:9}}, grid:{color:'rgba(54,45,89,0.3)'} },
+        y: { ticks:{color:'#8b8ba0',font:{size:9}}, grid:{color:'rgba(54,45,89,0.3)'} }
+      }
+    }
+  });
+}
+
+/* ═══════════ Render All ═══════════ */
+function renderAll() {
+  const O = DATA.orchestrator;
+  const syn = O.synthesis || {};
+  const stress = O.stress || {};
+  const cycle = O.cycle || {};
+  
+  // Phase + Risk badges
+  const phaseIcon = {normal_growth:'🟢',bubble_forming:'🟡',crisis_unfolding:'🔴',deleveraging:'🟠',order_transition:'💀'};
+  document.getElementById('phase-badge').textContent = 
+    `${phaseIcon[DATA.orchestrator.detected_phase]||'⚪'} ${O.phase_label}`;
+  
+  const riskScore = syn.risk_score || 50;
+  const riskColor = riskScore < 30 ? '#6bcb77' : riskScore < 45 ? '#ffd93d' : riskScore < 65 ? '#ff6b6b' : '#ff4757';
+  document.getElementById('risk-badge').style.background = riskColor + '33';
+  document.getElementById('risk-badge').style.color = riskColor;
+  document.getElementById('risk-badge').textContent = '风险 ' + riskScore + '/100';
+  document.getElementById('date-label').textContent = '更新: ' + O.date;
+  
+  // Warnings
+  const warns = syn.cross_validations || [];
+  document.getElementById('warnings').innerHTML = warns.map(w => 
+    `<div class="${w.includes('🔴')?'warning-box':'info-box'}">${w}</div>`
+  ).join('');
+  
+  // Pipeline metrics
+  const tpl = O.template || {};
+  document.getElementById('pipeline-metrics').innerHTML = [
+    {label:'1️⃣ 模板',val:(tpl.top_match||{}).name||'?',sub:'相似度 ' + ((tpl.top_match||{}).similarity*100||0).toFixed(0)+'%'},
+    {label:'2️⃣ 周期',val:cycle.short_term?.stage||'?',sub:'风险 '+cycle.risk},
+    {label:'3️⃣ 因果',val:(O.causal?.n_triggers||0)+'链触发',sub:(O.causal?.n_future||0)+'未来节点'},
+    {label:'4️⃣ 博弈',val:(O.game_theory?.trajectory||'').slice(0,15),sub:''},
+    {label:'5️⃣ 压力',val:(stress.n_alerts||0)+'告警',sub:stress.n_scenarios+'场景'},
+    {label:'6️⃣ 综合',val:'风险'+riskScore,sub:syn.risk_reward||''},
+  ].map(m => `<div class="metric-card"><div class="label">${m.label}</div><div class="value">${m.val}</div><div class="sub">${m.sub}</div></div>`).join('');
+  
+  // Dynamic weights chart
+  const weights = O.active_weights || {};
+  const wNames = {cycle:'周期',causal:'因果',template:'历史',stress:'压力',game:'博弈',narrative:'叙事',system:'系统',first_principles:'第一性'};
+  const wLabels = [], wVals = [], wColors = [];
+  for (const [k,v] of Object.entries(weights).sort((a,b)=>b[1]-a[1])) {
+    wLabels.push(wNames[k]||k);
+    wVals.push(v*100);
+    wColors.push(v>0.2?'#ff6b6b':v>0.1?'#ffd93d':'#6bcb77');
+  }
+  makeBarChart('weights-chart', wLabels, wVals, wColors, true);
+  
+  // Allocation
+  const alloc = syn.allocation || {};
+  const aIcons = {equity:'📈',gold:'🥇',bonds:'📜',cash:'💵'};
+  const aColors = {equity:'alloc-equity',gold:'alloc-gold',bonds:'alloc-bonds',cash:'alloc-cash'};
+  let allocHTML = '<div class="allocation-bar">';
+  for (const [k,v] of Object.entries(alloc)) {
+    allocHTML += `<div class="seg ${aColors[k]||''}" style="width:${v.weight*100}%">${(v.weight*100).toFixed(0)}%</div>`;
+  }
+  allocHTML += '</div>';
+  for (const [k,v] of Object.entries(alloc)) {
+    allocHTML += `<div style="font-size:0.78rem;margin:4px 0"><span style="color:var(--text-muted)">${aIcons[k]||''} ${k.toUpperCase()}:</span> ${v.components||''}</div>`;
+  }
+  document.getElementById('allocation-display').innerHTML = allocHTML;
+  
+  // Risk gauge
+  document.getElementById('risk-score').textContent = riskScore;
+  document.getElementById('risk-score').style.color = riskColor;
+  document.getElementById('risk-needle').style.left = riskScore + '%';
+  document.getElementById('risk-label').textContent = syn.risk_reward || '';
+  
+  // ═══ Historical Charts ═══
+  makeLineChart('chart-pmi', [
+    {label:'中国PMI',data:getSeries(['china_pmi']),color:'#ffb287'},
+    {label:'美国ISM PMI',data:getSeries(['us_pmi']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-cpi', [
+    {label:'中国CPI',data:getSeries(['china_cpi']),color:'#ffb287'},
+    {label:'美国CPI',data:getSeries(['us_cpi']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-gdp', [
+    {label:'中国GDP',data:getSeries(['china_gdp_growth']),color:'#ffb287'},
+    {label:'美国GDP',data:getSeries(['us_gdp_growth']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-unemp', [
+    {label:'中国',data:getSeries(['china_unemployment']),color:'#ffb287'},
+    {label:'美国',data:getSeries(['us_unemployment']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-sp500', [
+    {label:'标普500',data:getSeries(['us_sp500']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-vix', [
+    {label:'VIX',data:getSeries(['us_vixy']),color:'#fa7faa'},
+  ]);
+  
+  makeLineChart('chart-gold', [
+    {label:'黄金$/oz',data:getSeries(['gold']),color:'#ffd93d'},
+  ]);
+  
+  makeLineChart('chart-curve', [
+    {label:'2Y/10Y利差',data:getSeries(['us_yield_curve']),color:'#c2ef4e'},
+  ]);
+  
+  makeLineChart('chart-reserve', [
+    {label:'美元储备份额%',data:getSeries(['usd_reserve_share']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-gini', [
+    {label:'中国Gini',data:getSeries(['china_gini']),color:'#ffb287'},
+    {label:'美国Gini',data:getSeries(['us_gini']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-fed', [
+    {label:'Fed利率%',data:getSeries(['us_fed_rate']),color:'#6a5fc1'},
+  ]);
+  
+  makeLineChart('chart-sh', [
+    {label:'上证指数',data:getSeries(['china_sh_index']),color:'#ffb287'},
+  ]);
+  
+  // Stress history chart
+  if (DATA.stress_history && Object.keys(DATA.stress_history).length > 0) {
+    const stressDatasets = [];
+    const topIds = stress.top_risks?.slice(0,4).map(r=>r.id) || [];
+    const colors = ['#ff4757','#ff6b6b','#ffd93d','#c2ef4e'];
+    for (const sid of topIds) {
+      if (DATA.stress_history[sid]) {
+        stressDatasets.push({
+          label: sid.replace(/_/g,' ').slice(0,20),
+          data: DATA.stress_history[sid].map(p => ({x:p.date,y:p.probability*100})),
+          color: colors[stressDatasets.length] || '#6a5fc1',
+        });
+      }
+    }
+    if (stressDatasets.length > 0) {
+      makeLineChart('chart-stress-hist', stressDatasets);
+    }
+  }
+  
+  // Sentiment chart
+  if (DATA.sentiment_history && DATA.sentiment_history.length > 0) {
+    makeLineChart('chart-sentiment', [
+      {label:'牛熊比',data:DATA.sentiment_history.map(p=>[p.date,p.bull_ratio*100]),color:'#c2ef4e'},
+      {label:'背离得分',data:DATA.sentiment_history.map(p=>[p.date,p.divergence_score]),color:'#ffb287'},
+    ]);
+  }
+  
+  // ═══ Causal chain ═══
+  const cau = O.causal || {};
+  document.getElementById('causal-summary').textContent = `${cau.n_triggers||0} 条因果链已触发`;
+  document.getElementById('causal-events').innerHTML = (cau.events||[]).slice(0,5).map(e => 
+    `<div style="padding:4px 0;font-size:0.82rem"><span class="mono">T+${e.expected_month}m</span> ${e.label||''}</div>`
+  ).join('');
+  
+  // ═══ Game scenarios ═══
+  const gt = O.game_theory || {};
+  document.getElementById('game-trajectory').textContent = gt.trajectory||'';
+  document.getElementById('game-scenarios').innerHTML = (gt.scenarios||[]).map(s =>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+      <span style="font-weight:600">${s.name}</span> P=${(s.probability*100).toFixed(0)}% — ${s.description||''}
+    </div>`
+  ).join('');
+  
+  // ═══ System dynamics ═══
+  const sd = O.system_dynamics || {};
+  const pt = sd.phase_transition || {};
+  document.getElementById('sys-criticality').textContent = 
+    sd.criticality + ' | 崩溃概率: ' + ((pt.systemic_collapse_probability||0)*100).toFixed(1) + '%';
+  
+  const stabs = sd.stabilizer_details || {};
+  document.getElementById('stabilizer-bars').innerHTML = Object.entries(stabs).map(([k,v]) => {
+    const barPct = (v.health_score||50);
+    const barColor = barPct>65?'#6bcb77':barPct>35?'#ffd93d':'#ff4757';
+    return `<div style="margin:8px 0">
+      <div style="display:flex;justify-content:space-between;font-size:0.78rem">
+        <span>${v.label||k}</span><span class="mono">${barPct.toFixed(0)}</span>
+      </div>
+      <div style="background:var(--border);height:4px;border-radius:2px;margin-top:4px">
+        <div style="width:${barPct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s"></div>
+      </div>
+      ${(v.failure_signals||[]).map(f=>`<div style="font-size:0.7rem;color:var(--danger);margin-top:2px">↳ ${f}</div>`).join('')}
+    </div>`;
+  }).join('');
+  
+  document.getElementById('phase-warnings').innerHTML = (pt.warnings||[]).map(w =>
+    `<div style="color:${w.includes('🚨')||w.includes('🔴')?'var(--danger)':'var(--warning)'};font-size:0.75rem">${w}</div>`
+  ).join('');
+  
+  // ═══ First principles ═══
+  const fp = O.first_principles || {};
+  document.getElementById('fp-chains').innerHTML = (fp.active_chains||[]).slice(0,4).map(c =>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+      <span style="font-size:1.1rem">${c.kaomoji||''}</span> <strong>${c.topic||''}</strong>
+      <div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px">触发度: ${(c.trigger_ratio*100).toFixed(0)}%</div>
+    </div>`
+  ).join('');
+  
+  // ═══ Stress table ═══
+  document.querySelector('#stress-table tbody').innerHTML = (stress.top_risks||[]).map((r,i) =>
+    `<tr>
+      <td>${r.label||''}</td>
+      <td><span style="color:${r.probability>0.4?'#ff4757':r.probability>0.2?'#ffd93d':'#6bcb77'};font-weight:600">${(r.probability*100).toFixed(1)}%</span></td>
+      <td>${r.risk_level||''}</td>
+      <td style="font-size:0.75rem;color:var(--text-muted)">${(r.preconditions||[]).slice(0,2).map(p=>p.key+'='+p.value).join(', ')}</td>
+    </tr>`
+  ).join('');
+}
+
+/* ═══════════ Tab switching ═══════════ */
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('tab-btn')) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById(e.target.dataset.tab);
+    if (target) target.classList.add('active');
+  }
+});
+
+/* ═══════════ Init ═══════════ */
+loadData();
+</script>
+</body>
+</html>
