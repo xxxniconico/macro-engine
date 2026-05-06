@@ -1,0 +1,52 @@
+# Dalio 宏观分析引擎配置
+
+# 数据抓取
+data:
+  # 更新频率: daily / weekly
+  fetch_frequency: daily
+  
+  # 数据源启用开关
+  sources:
+    sina: true       # 新浪财经（美股、商品、汇率）
+    eastmoney: true  # 东方财富（A股、中国经济数据）
+  
+  # 缓存过期时间（小时）
+  cache_ttl_hours: 6
+
+# 数据库
+database:
+  path: data/macro.db
+
+# 周期定位
+cycle:
+  # 短期周期判定阈值
+  short_term:
+    # 扩张期：PMI > 50、GDP > 潜在增速、失业率下降
+    expansion_pmi_threshold: 50
+    # 过热信号：CPI > 3%、产能利用率 > 85%
+    overheating_cpi_threshold: 3.0
+  
+  # 长期周期判定
+  long_term:
+    # 债务/GDP 警戒线
+    debt_gdp_warning: 250   # %
+    debt_gdp_danger: 300    # %
+  
+  # 帝国周期指标权重
+  empire:
+    reserve_currency_weight: 0.35
+    wealth_gap_weight: 0.25
+    political_polarization_weight: 0.25
+    innovation_weight: 0.15
+
+# 分析引擎
+engine:
+  # 置信度阈值
+  min_confidence: 0.5
+  # 至少需要多少指标才能输出判断
+  min_indicators: 5
+
+# 看板
+dashboard:
+  title: "Dalio 宏观周期定位系统"
+  port: 8501
