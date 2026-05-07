@@ -8,3 +8,5 @@ __pycache__/
 dist/
 build/
 # dashboard/data.json — tracked for GitHub Pages static hosting
+logs/
+*.bak

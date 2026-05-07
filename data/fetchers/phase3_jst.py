@@ -141,7 +141,7 @@ def extract_g7_composites(df):
 
     # G7 average inflation
     g7["inflation"] = g7.groupby("iso")["cpi"].pct_change() * 100
-    g7_inf = g7.groupby("year")["inflation"].mean()
+    g7_inf = g7.groupby("year")["inflation"].median()
 
     g7_inflation = {}
     for yr, val in g7_inf.items():
