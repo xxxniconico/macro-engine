@@ -1,0 +1,5 @@
+{
+  "_comment": "每月手动填入最新宏观数据（ISM PMI发布后填写）",
+  "us_pmi": null,
+  "_instructions": "修改数值后保存，下次 update_monthly.sh 自动读取"
+}

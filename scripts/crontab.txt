@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════
+# Dalio 宏观模型 — Cron 定时任务
+# ═══════════════════════════════════════════════════════
+#
+# 安装: crontab ~/macro-engine/scripts/crontab.txt
+# 查看: crontab -l
+# 日志: ~/macro-engine/logs/
+
+# Tier 1 — 每日行情 (交易日 08:00)
+0 8 * * 1-5 cd /home/xxxsuli/macro-engine && bash scripts/update_daily.sh >> logs/cron.log 2>&1
+
+# Tier 2 — 每月宏观 (每月1日 08:00)
+0 8 1 * * cd /home/xxxsuli/macro-engine && bash scripts/update_monthly.sh >> logs/cron.log 2>&1
+
+# Tier 3 — 每季宏观 (1/5, 4/5, 7/5, 10/5 08:00)
+0 8 5 1,4,7,10 * cd /home/xxxsuli/macro-engine && bash scripts/update_quarterly.sh >> logs/cron.log 2>&1
+
+# Tier 4 — 每年结构数据 (1月15日 08:00)
+0 8 15 1 * cd /home/xxxsuli/macro-engine && bash scripts/update_annual.sh >> logs/cron.log 2>&1
