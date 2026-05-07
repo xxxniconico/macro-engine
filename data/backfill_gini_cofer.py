@@ -55,11 +55,11 @@ def fetch_worldbank(indicator: str, country: str = "CN", per_page: int = 50) -> 
 
 print("═══ Gini 系数 ═══")
 
-# WB indicator: SI.POV.GINI (Gini index)
+# WB indicator: SI.POV.GINI (Gini index, 0-100 scale → convert to 0-1)
 print("[中国 Gini] 正在获取...")
 cn_gini = fetch_worldbank("SI.POV.GINI", "CN")
 for r in cn_gini:
-    save("china_gini", r["value"], r["date"], "worldbank")
+    save("china_gini", r["value"] / 100, r["date"], "worldbank")
 print(f"  ✅ {len(cn_gini)} 条 ({cn_gini[0]['date'][:4] if cn_gini else 'N/A'}~{cn_gini[-1]['date'][:4] if cn_gini else 'N/A'})")
 
 time.sleep(1)
@@ -67,7 +67,7 @@ time.sleep(1)
 print("[美国 Gini] 正在获取...")
 us_gini = fetch_worldbank("SI.POV.GINI", "US")
 for r in us_gini:
-    save("us_gini", r["value"], r["date"], "worldbank")
+    save("us_gini", r["value"] / 100, r["date"], "worldbank")
 print(f"  ✅ {len(us_gini)} 条")
 
 # 更新当前快照用的 gini 值
@@ -78,11 +78,12 @@ cn_latest = c.fetchone()
 c.execute("SELECT value, date FROM macro_indicators WHERE indicator_name='us_gini' ORDER BY date DESC LIMIT 1")
 us_latest = c.fetchone()
 
-cn_gini_val = cn_latest[0] if cn_latest else 38.0
-us_gini_val = us_latest[0] if us_latest else 41.8
-save("us_wealth_gap", us_gini_val / 100, today, "worldbank")  # 转为0-1
-save("china_wealth_gap", cn_gini_val / 100, today, "worldbank")
-print(f"  当前: 中国Gini={cn_gini_val} 美国Gini={us_gini_val}")
+# Gini now stored in 0-1 scale throughout
+cn_gini_val = cn_latest[0] if cn_latest else 0.38
+us_gini_val = us_latest[0] if us_latest else 0.418
+save("us_wealth_gap", us_gini_val, today, "worldbank")
+save("china_wealth_gap", cn_gini_val, today, "worldbank")
+print(f"  当前: 中国Gini={cn_gini_val:.3f} 美国Gini={us_gini_val:.3f}")
 
 time.sleep(1)
 
