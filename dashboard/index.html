@@ -284,7 +284,7 @@ body {
 <div class="header">
   <div>
     <h1>🔮 Dalio 宏观协同总指挥</h1>
-    <span style="color:var(--text-muted);font-size:0.8rem">V7.5 · 6步流程 · 动态权重 · 仓位输出 · <span id="build-ver" style="color:var(--accent-lime)">build 240507.1</span></span>
+    <span style="color:var(--text-muted);font-size:0.8rem">V7.5 · 6步流程 · 动态权重 · 仓位输出 · <span id="build-ver" style="color:var(--accent-lime)"></span></span>
   </div>
   <div style="display:flex;gap:10px;align-items:center">
     <span id="phase-badge" class="phase-badge">加载中...</span>
@@ -451,6 +451,7 @@ body {
       <h3>🎯 博弈终局场景</h3>
       <div id="game-scenarios"></div>
       <div style="margin-top:8px;font-size:0.8rem;color:var(--text-muted)" id="game-trajectory"></div>
+      <div id="game-tensions" style="margin-top:6px"></div>
     </div>
     
     <!-- System dynamics -->
@@ -579,6 +580,7 @@ async function loadData() {
     DATA = JSON.parse(text);
     statusEl.textContent = 
       `✅ ${DATA.generated_at} · ${Object.keys(DATA.time_series).length}指标`;
+    document.getElementById('build-ver').textContent = 'build ' + DATA.generated_at;
     renderAll();
   } catch(e) {
     statusEl.textContent = '❌ 加载失败: ' + e.message;
@@ -1132,6 +1134,24 @@ makeLineChart('chart-sh', [
     });
   }
   document.getElementById('game-scenarios').innerHTML = gameHTML;
+  
+  // ── Game History (latest tensions) ──
+  const gh = DATA.game_history || [];
+  if (gh.length > 0) {
+    const latest = gh.filter(x => x.date === gh[gh.length-1].date);
+    const tensionEl = document.getElementById('game-tensions');
+    if (tensionEl) {
+      const playerNames = {fed:'Fed',china_gov:'🇨🇳',markets:'🌍',china_markets:'🇨🇳市场',eu:'🇪🇺',commodity_producers:'⛽'};
+      const tHTML = latest.map(p => {
+        const t = p.tension||0;
+        const tc = t>0.4?'var(--danger)':t>0.2?'var(--warning)':'var(--success)';
+        return `<span style="padding:2px 6px;border-radius:4px;font-size:0.7rem;margin:2px;display:inline-block"
+          title="${p.status||''} ${p.bias||''}">${playerNames[p.player]||p.player}
+          <span style="color:${tc};font-weight:600">${(t*100).toFixed(0)}%</span></span>`;
+      }).join('');
+      tensionEl.innerHTML = tHTML;
+    }
+  }
   
   // ═══ System dynamics (V2 详细) ═══
   const sd = O.system_dynamics || {};
