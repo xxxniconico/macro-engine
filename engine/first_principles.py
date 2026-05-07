@@ -21,12 +21,31 @@
 """
 
 import sys
+import math
 from pathlib import Path
 from typing import Optional
 from datetime import date
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from data.storage import get_snapshot, DB_PATH
+
+
+# ═══════════════════════════════════════════════════════
+#  Sigmoid 强度函数
+# ═══════════════════════════════════════════════════════
+
+def _strength(value: float, threshold: float, op: str, steepness: float = 1.0) -> float:
+    """计算单个触发条件的强度分 (0-1)。"""
+    diff = value - threshold
+    if threshold != 0:
+        diff = diff / abs(threshold)
+    if op == ">":
+        x = diff * steepness
+    elif op == "<":
+        x = -diff * steepness
+    else:
+        x = 0
+    return min(1.0, max(0.0, 1.0 / (1.0 + math.exp(-x))))
 
 
 # ═══════════════════════════════════════════════════════
@@ -350,16 +369,17 @@ def get_active_chains(snapshot: dict = None) -> list[dict]:
             indicators[k] = val
     
     active = []
-    
+
     for chain_id, conditions in THEME_TRIGGERS.items():
         chain = CHAINS.get(chain_id)
         if not chain:
             continue
-        
-        # 检查触发条件
-        trig_count = 0
-        total_cond = len(conditions)
-        
+
+        # V2: 每个条件用 sigmoid 强度代替二元判断
+        strengths = []
+        triggered = []
+        approaching = []
+
         for cond in conditions:
             parts = cond.split()
             if len(parts) == 3:
@@ -368,24 +388,60 @@ def get_active_chains(snapshot: dict = None) -> list[dict]:
                 if val is None:
                     continue
                 threshold = float(threshold_str)
+
+                # 选陡峭度 (不同指标敏感度不同)
+                steep = 1.0
+                if name in ("us_yield_curve", "us_vixy"):
+                    steep = 3.0  # 金融指标更灵敏
+                elif name in ("gold",):
+                    steep = 2.0
+                elif name in ("china_debt_gdp", "us_debt_gdp", "usd_reserve_share"):
+                    steep = 0.8  # 结构性指标变化慢
+
+                s = _strength(val, threshold, op, steep)
+                strengths.append(s)
+
+                # 分类：触发 vs 逼近
                 if op == ">" and val > threshold:
-                    trig_count += 1
+                    triggered.append((name, val, threshold, s))
                 elif op == "<" and val < threshold:
-                    trig_count += 1
-        
-        # 至少一半条件满足
-        if trig_count >= max(1, total_cond // 2):
-            # 获取该链的根洞察
+                    triggered.append((name, val, threshold, s))
+                elif s > 0.3:  # 逼近
+                    approaching.append((name, val, threshold, s))
+
+        if not strengths:
+            continue
+
+        avg_strength = sum(strengths) / len(strengths)
+
+        # 至少一个条件触发，且平均强度>0.3
+        if triggered and avg_strength > 0.3:
             root = next((s for s in chain["steps"] if s["level"] == "root"), None)
-            
+
+            # 相关性趋势: 强度是在上升还是下降？
+            trend = "➡️"
+            if avg_strength > 0.75:
+                trend = "🔺高度相关"
+            elif avg_strength > 0.55:
+                trend = "🟡中度相关"
+            elif avg_strength > 0.3:
+                trend = "🟢低度相关"
+
             active.append({
                 "id": chain_id,
                 "topic": chain["topic"],
                 "kaomoji": chain["kaomoji"],
-                "trigger_ratio": trig_count / max(total_cond, 1),
+                "trigger_ratio": round(avg_strength, 3),
+                "trigger_count": len(triggered),
+                "total_conditions": len(conditions),
                 "root_insight": root["insight"] if root else "",
                 "current_relevance": chain["current_relevance"],
                 "step_count": len(chain["steps"]),
+                "strength_detail": [{"name": n, "value": v, "threshold": t, "strength": round(s, 2)}
+                                    for n, v, t, s in triggered],
+                "approaching": [{"name": n, "value": v, "threshold": t, "strength": round(s, 2)}
+                                for n, v, t, s in approaching],
+                "trend": trend,
             })
     
     # 按触发比例排序

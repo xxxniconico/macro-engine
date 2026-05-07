@@ -3,122 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Dalio 宏观协同总指挥 V7</title>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
 /* ═══════════ Sentry Dark Theme ═══════════ */
 :root {
-  --bg-primary: #1f1633;
-  --bg-deeper: #150f23;
-  --bg-card: rgba(31, 22, 51, 0.85);
-  --border: #362d59;
-  --border-light: #584674;
-  --text-primary: #ffffff;
-  --text-secondary: #e5e7eb;
-  --text-muted: #8b8ba0;
-  --accent-purple: #6a5fc1;
-  --accent-muted: #79628c;
-  --accent-lime: #c2ef4e;
-  --accent-coral: #ffb287;
-  --accent-pink: #fa7faa;
-  --danger: #ff4757;
-  --warning: #ffd93d;
-  --success: #6bcb77;
-  --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
-  --shadow-glow: 0 0 30px rgba(106,95,193,0.15);
-  --radius: 8px;
-  --radius-lg: 13px;
+  --bg-primary: #1a1330;
+  --bg-deeper: #110b20;
+  --bg-card: rgba(25, 18, 45, 0.92);
+  --border: #2d2350;
+  --border-light: #4a3b6e;
+  --text-primary: #f0edf6;
+  --text-secondary: #c5c0d6;
+  --text-muted: #7e7799;
+  --accent-purple: #7c6ff7;
+  --accent-muted: #6958a0;
+  --accent-lime: #b8f53e;
+  --accent-coral: #ff9b6e;
+  --accent-pink: #f765a3;
+  --danger: #ff525f;
+  --warning: #ffd63d;
+  --success: #5ce68c;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.35);
+  --shadow-glow: 0 0 40px rgba(124,111,247,0.12);
+  --radius: 10px;
+  --radius-lg: 16px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: 'Rubik', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
+  background-image: radial-gradient(ellipse at 20% 10%, rgba(124,111,247,0.06) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 90%, rgba(255,155,110,0.04) 0%, transparent 60%);
   color: var(--text-primary);
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.55;
 }
-.container { max-width:1400px; margin:0 auto; padding:20px 24px; }
+.container { max-width:1480px; margin:0 auto; padding:24px 28px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg-deeper); }
+::-webkit-scrollbar-thumb { background:var(--border-light); border-radius:3px; }
 
 /* Header */
 .header {
   display:flex; justify-content:space-between; align-items:center;
-  padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:20px;
+  padding:16px 0; border-bottom:1px solid var(--border); margin-bottom:24px;
   flex-wrap:wrap; gap:12px;
 }
-.header h1 { font-size:1.6rem; font-weight:700; letter-spacing:-0.5px; }
+.header h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.5px; background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .header .phase-badge {
-  background: var(--accent-muted); color:var(--text-primary);
-  padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600;
-  text-transform:uppercase; letter-spacing:0.5px;
+  background:rgba(124,111,247,0.15); color:var(--accent-purple);
+  padding:6px 16px; border-radius:20px; font-size:0.82rem; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.5px; border:1px solid rgba(124,111,247,0.25);
 }
 .header .risk-badge {
-  padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600;
+  padding:6px 16px; border-radius:20px; font-size:0.82rem; font-weight:700;
+  border:1px solid currentColor;
 }
 
 /* Top metrics row */
-.metrics-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px; margin-bottom:20px; }
+.metrics-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:14px; margin-bottom:24px; }
 .metric-card {
-  background:rgba(31,22,51,0.7); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px;
-  transition:border-color 0.2s;
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 16px;
+  transition:all 0.25s; backdrop-filter:blur(8px);
 }
-.metric-card:hover { border-color:var(--accent-purple); }
-.metric-card .label { font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
-.metric-card .value { font-size:1.4rem; font-weight:700; }
-.metric-card .sub { font-size:0.8rem; color:var(--text-muted); margin-top:2px; }
+.metric-card:hover { border-color:var(--accent-purple); transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,111,247,0.1); }
+.metric-card .label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.metric-card .value { font-size:1.35rem; font-weight:700; color:var(--text-primary); }
+.metric-card .sub { font-size:0.78rem; color:var(--text-muted); margin-top:3px; }
 
 /* Section */
-.section { margin-bottom:24px; }
+.section { margin-bottom:28px; }
 .section-title {
-  font-size:0.78rem; text-transform:uppercase; letter-spacing:1px;
-  color:var(--accent-lime); margin-bottom:12px;
-  display:flex; align-items:center; gap:8px;
+  font-size:0.72rem; text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--accent-lime); margin-bottom:14px;
+  display:flex; align-items:center; gap:10px; font-weight:600;
 }
-.section-title::before { content:''; width:3px; height:16px; background:var(--accent-lime); border-radius:2px; }
+.section-title::before { content:''; width:3px; height:18px; background:linear-gradient(180deg,var(--accent-lime),var(--accent-purple)); border-radius:2px; }
 
 /* Chart containers */
-.chart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px,1fr)); gap:16px; }
+.chart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px,1fr)); gap:18px; }
 .chart-card {
   background:var(--bg-card); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px;
-  box-shadow:var(--shadow-card);
+  border-radius:var(--radius); padding:18px;
+  box-shadow:var(--shadow-card); backdrop-filter:blur(8px);
+  transition:border-color 0.3s;
 }
-.chart-card h3 { font-size:0.9rem; font-weight:600; margin-bottom:4px; }
-.chart-card .chart-hint { font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; }
+.chart-card:hover { border-color:rgba(124,111,247,0.25); }
+.chart-card h3 { font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--text-secondary); }
+.chart-card .chart-hint { font-size:0.7rem; color:var(--text-muted); margin-bottom:12px; }
 .chart-card canvas { max-height:240px; }
 
 /* Tables */
-.data-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.data-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
 .data-table th {
-  text-align:left; padding:8px 10px; color:var(--text-muted);
-  text-transform:uppercase; letter-spacing:0.5px; font-size:0.7rem;
-  border-bottom:1px solid var(--border);
+  text-align:left; padding:10px 12px; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:0.6px; font-size:0.68rem; font-weight:600;
+  border-bottom:2px solid var(--border); background:rgba(0,0,0,0.15);
 }
-.data-table td { padding:8px 10px; border-bottom:1px solid rgba(54,45,89,0.5); }
-.data-table tr:hover td { background:rgba(106,95,193,0.08); }
+.data-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+.data-table tr:nth-child(even) td { background:rgba(124,111,247,0.03); }
+.data-table tr:hover td { background:rgba(124,111,247,0.08); }
+.data-table td:first-child, .data-table th:first-child { border-radius:var(--radius) 0 0 var(--radius); }
+.data-table td:last-child, .data-table th:last-child { border-radius:0 var(--radius) var(--radius) 0; }
 
 /* Allocation */
 .allocation-bar {
-  display:flex; height:32px; border-radius:6px; overflow:hidden; margin:8px 0;
+  display:flex; height:36px; border-radius:8px; overflow:hidden; margin:8px 0; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);
 }
 .allocation-bar .seg {
   display:flex; align-items:center; justify-content:center;
-  font-size:0.75rem; font-weight:600; color:#fff; min-width:40px;
+  font-size:0.72rem; font-weight:700; color:#fff; min-width:44px; transition:all 0.4s;
 }
-.alloc-equity { background:var(--accent-purple); }
-.alloc-gold { background:var(--accent-coral); }
-.alloc-bonds { background:var(--accent-muted); }
-.alloc-cash { background:var(--border-light); }
+.alloc-equity { background:linear-gradient(135deg, #7c6ff7, #5a4fd4); }
+.alloc-gold { background:linear-gradient(135deg, #ff9b6e, #e07a50); }
+.alloc-bonds { background:linear-gradient(135deg, #6958a0, #4a3b6e); }
+.alloc-cash { background:linear-gradient(135deg, #4a3b6e, #2d2350); }
 
 /* Risk gauge */
 .risk-gauge {
-  position:relative; width:100%; height:8px; background:linear-gradient(to right, #6bcb77 0%, #ffd93d 40%, #ff6b6b 70%, #ff4757 100%);
-  border-radius:4px; margin:8px 0;
+  position:relative; width:100%; height:10px; background:linear-gradient(to right, #5ce68c 0%, #ffd63d 40%, #ff525f 70%, #ff2040 100%);
+  border-radius:5px; margin:10px 0; box-shadow:inset 0 1px 2px rgba(0,0,0,0.3);
 }
 .risk-gauge .needle {
-  position:absolute; top:-4px; width:3px; height:16px; background:white; border-radius:2px;
-  transform:translateX(-50%); transition:left 0.5s;
+  position:absolute; top:-5px; width:4px; height:20px; background:#fff; border-radius:2px;
+  transform:translateX(-50%); transition:left 0.6s cubic-bezier(0.4,0,0.2,1); box-shadow:0 0 8px rgba(255,255,255,0.3);
 }
 
 /* Warnings */
@@ -134,26 +151,131 @@ body {
 }
 
 /* Tabs */
-.tabs { display:flex; gap:0; margin-bottom:16px; border-bottom:1px solid var(--border); }
+.tabs { display:flex; gap:2px; margin-bottom:18px; border-bottom:1px solid var(--border); }
 .tab-btn {
-  background:none; border:none; color:var(--text-muted); padding:8px 20px;
-  font-family:inherit; font-size:0.82rem; cursor:pointer;
-  border-bottom:2px solid transparent; transition:all 0.2s;
-  text-transform:uppercase; letter-spacing:0.5px;
+  background:none; border:none; color:var(--text-muted); padding:10px 22px;
+  font-family:inherit; font-size:0.78rem; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all 0.25s;
+  text-transform:uppercase; letter-spacing:0.6px; font-weight:500;
 }
-.tab-btn:hover { color:var(--text-primary); }
-.tab-btn.active { color:var(--accent-lime); border-bottom-color:var(--accent-lime); }
+.tab-btn:hover { color:var(--text-secondary); background:rgba(124,111,247,0.05); }
+.tab-btn.active { color:var(--accent-lime); border-bottom-color:var(--accent-lime); background:rgba(124,111,247,0.03); }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 
 /* Responsive */
-@media(max-width:768px) {
+@media(max-width:900px) {
   .header { flex-direction:column; align-items:flex-start; }
   .chart-grid { grid-template-columns:1fr; }
   .metrics-row { grid-template-columns:repeat(2,1fr); }
+  .exec-grid { grid-template-columns:1fr; }
+  .exec-summary { padding:16px 18px; }
+  .exec-header { flex-direction:column; align-items:flex-start; }
 }
 
-.mono { font-family:'JetBrains Mono', monospace; font-size:0.82rem; }
+.mono { font-family:'JetBrains Mono', monospace; font-size:0.8rem; }
+
+/* Pulse animation for live indicators */
+@keyframes subtlePulse {
+  0%,100% { opacity:1; }
+  50% { opacity:0.7; }
+}
+.live-indicator { animation:subtlePulse 3s ease-in-out infinite; }
+
+/* Executive summary */
+.exec-summary {
+  background: linear-gradient(135deg, rgba(25,18,45,0.98), rgba(15,9,30,0.98));
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 24px 28px; margin-bottom: 24px;
+  box-shadow: var(--shadow-glow); backdrop-filter:blur(12px);
+}
+.exec-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+  flex-wrap:wrap; gap:12px;
+}
+.exec-grid {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+  gap:16px; margin-top:4px;
+}
+.exec-col { padding: 4px 0; }
+.exec-col-title {
+  font-size:0.7rem; text-transform:uppercase; letter-spacing:1px;
+  color: var(--accent-lime); margin-bottom: 8px;
+}
+.exec-col .item {
+  padding: 5px 0; border-bottom:1px solid rgba(54,45,89,0.4);
+  font-size:0.82rem; line-height:1.4;
+}
+.exec-col .item:last-child { border-bottom:none; }
+.exec-col .dir { display:inline-block; width:22px; font-size:0.9rem; text-align:center; }
+.exec-col .pct { float:right; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text-muted); }
+
+/* ═══════════ Mobile Responsive ═══════════ */
+@media (max-width: 768px) {
+  .container { padding:12px 14px; }
+  .header h1 { font-size:1.15rem; }
+  .header { padding:10px 0; margin-bottom:14px; }
+  .chart-grid { grid-template-columns:1fr; gap:8px; }
+  .metrics-row { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .metric-card { padding:12px 10px; }
+  .tab-row { overflow-x:auto; gap:4px; }
+  .tab-btn { padding:6px 10px; font-size:0.7rem; }
+  .chart-card { padding:12px 10px; }
+  .chart-card h3 { font-size:0.82rem; }
+  .chart-card canvas { height:180px !important; }
+  .section { padding:0; margin-bottom:20px; }
+  .section-title { font-size:0.9rem; margin-bottom:10px; }
+  .executive-summary { flex-direction:column; }
+  .exec-col { flex:1; margin-bottom:8px; }
+  .allocation-bar { flex-direction:column; height:auto; border-radius:6px; }
+  .allocation-bar .seg { height:24px; border-radius:4px; margin:1px 0; }
+  .scenario-grid { grid-template-columns:1fr; }
+  .data-table { font-size:0.7rem; }
+  .data-table th, .data-table td { padding:4px 6px; }
+}
+
+/* ═══════════ Interactive Scenario Player ═══════════ */
+.scenario-player {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 24px; margin-bottom:24px; backdrop-filter:blur(8px);
+}
+.scenario-player h2 { font-size:0.95rem; margin-bottom:4px; color:var(--accent-lime); }
+.scenario-player .hint { font-size:0.72rem; color:var(--text-muted); margin-bottom:16px; }
+.scenario-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:14px; }
+.scenario-item { }
+.scenario-item label {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.78rem; color:var(--text-secondary); margin-bottom:4px;
+}
+.scenario-item label .val { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent-purple); }
+.scenario-item input[type=range] {
+  -webkit-appearance:none; width:100%; height:6px; border-radius:3px;
+  background:linear-gradient(90deg,var(--success),var(--warning),var(--danger));
+  outline:none; margin:4px 0;
+}
+.scenario-item input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:var(--accent-purple); cursor:pointer; border:2px solid var(--text-primary);
+}
+.scenario-result {
+  margin-top:18px; padding:14px 18px; background:rgba(124,111,247,0.08);
+  border-radius:var(--radius); border:1px solid var(--border-light);
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+}
+.scenario-result .new-risk {
+  font-size:1.6rem; font-weight:700; font-family:'JetBrains Mono',monospace;
+}
+.scenario-result .delta {
+  font-size:0.85rem; font-family:'JetBrains Mono',monospace;
+}
+.scenario-result .actions { font-size:0.78rem; color:var(--text-secondary); max-width:300px; }
+.scenario-reset {
+  background:transparent; border:1px solid var(--border-light); color:var(--text-secondary);
+  padding:4px 12px; border-radius:14px; font-size:0.72rem; cursor:pointer;
+  transition:all 0.2s;
+}
+.scenario-reset:hover { border-color:var(--accent-purple); color:var(--accent-purple); }
 </style>
 </head>
 <body>
@@ -162,7 +284,7 @@ body {
 <div class="header">
   <div>
     <h1>🔮 Dalio 宏观协同总指挥</h1>
-    <span style="color:var(--text-muted);font-size:0.8rem">V7 · 6步流程 · 动态权重 · 仓位输出</span>
+    <span style="color:var(--text-muted);font-size:0.8rem">V7.5 · 6步流程 · 动态权重 · 仓位输出 · <span id="build-ver" style="color:var(--accent-lime)">build 240507.1</span></span>
   </div>
   <div style="display:flex;gap:10px;align-items:center">
     <span id="phase-badge" class="phase-badge">加载中...</span>
@@ -171,9 +293,37 @@ body {
   </div>
 </div>
 
-<!-- Warning row -->
-<div id="warnings"></div>
+<!-- ══════ 综合宏观分析 ══════ -->
+<div class="exec-summary" id="exec-summary">
+  <div class="exec-header">
+    <div>
+      <span id="exec-phase-icon" style="font-size:2rem">—</span>
+      <h2 style="display:inline;margin-left:8px" id="exec-phase-label">加载中...</h2>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:2.5rem;font-weight:700" id="exec-risk">—</div>
+      <div style="font-size:0.75rem;color:var(--text-muted)" id="exec-risk-label"></div>
+    </div>
+  </div>
+  <div id="exec-narrative" style="font-size:0.95rem;line-height:1.7;margin:12px 0;padding:12px;background:rgba(106,95,193,0.08);border-radius:8px"></div>
+  <div class="exec-grid">
+    <div class="exec-col">
+      <div class="exec-col-title">📈 核心趋势</div>
+      <div id="exec-trends"></div>
+    </div>
+    <div class="exec-col">
+      <div class="exec-col-title">⚠️ 主要风险</div>
+      <div id="exec-risks"></div>
+    </div>
+    <div class="exec-col">
+      <div class="exec-col-title">🎯 操作建议</div>
+      <div id="exec-actions"></div>
+    </div>
+  </div>
+  <div id="exec-allocation" style="margin-top:12px"></div>
+</div>
 
+<!-- Warning row (hidden — moved to executive summary + bottom diagnosis) -->
 <!-- Top metrics: 6-step pipeline -->
 <div class="metrics-row" id="pipeline-metrics"></div>
 
@@ -182,6 +332,7 @@ body {
   <div class="chart-card">
     <h3>⚖️ 动态视角权重</h3>
     <canvas id="weights-chart" style="max-height:200px"></canvas>
+    <div id="phase-breakdown" style="margin-top:10px;font-size:0.75rem;color:var(--text-muted)"></div>
   </div>
   <div class="chart-card">
     <h3>💰 仓位配置</h3>
@@ -195,6 +346,22 @@ body {
   </div>
 </div>
 
+<!-- ══════ Interactive Scenario Player ══════ -->
+<div class="scenario-player" id="scenario-player">
+  <h2>🎮 场景推演 — What If?</h2>
+  <div class="hint">拖拽滑块模拟指标变化，观察风险得分实时响应（基于 P1 灵敏度分析）</div>
+  <div class="scenario-grid" id="scenario-sliders"></div>
+  <div class="scenario-result">
+    <div>
+      <span style="color:var(--text-muted);font-size:0.75rem">模拟风险得分</span>
+      <div class="new-risk" id="scenario-risk">45</div>
+      <div class="delta" id="scenario-delta"></div>
+    </div>
+    <div class="actions" id="scenario-actions"></div>
+    <button class="scenario-reset" onclick="resetScenario()">↺ 重置</button>
+  </div>
+</div>
+
 <!-- ══════ Tab: Historical Charts ══════ -->
 <div class="section">
   <div class="section-title">📈 历史趋势</div>
@@ -203,6 +370,8 @@ body {
     <button class="tab-btn" data-tab="tab-market">市场指标</button>
     <button class="tab-btn" data-tab="tab-structure">结构变化</button>
     <button class="tab-btn" data-tab="tab-stress">压力测试</button>
+    <button class="tab-btn" data-tab="tab-academic">学术数据</button>
+    <button class="tab-btn" data-tab="tab-centennial">百年数据</button>
   </div>
   
   <div class="tab-content active" id="tab-macro">
@@ -227,7 +396,10 @@ body {
     <div class="chart-grid">
       <div class="chart-card"><h3>美元储备份额</h3><canvas id="chart-reserve"></canvas></div>
       <div class="chart-card"><h3>Gini 系数</h3><canvas id="chart-gini"></canvas></div>
+      <div class="chart-card"><h3>中国实际利率</h3><div class="chart-hint">WB: 贷款利率 − CPI，年频</div><canvas id="chart-cn-realrate"></canvas></div>
       <div class="chart-card"><h3>Fed 利率</h3><canvas id="chart-fed"></canvas></div>
+      <div class="chart-card"><h3>中国军费/GDP</h3><div class="chart-hint">World Bank — 帝国周期核心指标</div><canvas id="chart-cn-mil"></canvas></div>
+      <div class="chart-card"><h3>中国教育支出/GDP</h3><div class="chart-hint">World Bank — Dalio 8大力量指标</div><canvas id="chart-cn-edu"></canvas></div>
       <div class="chart-card"><h3>上证指数</h3><canvas id="chart-sh"></canvas></div>
     </div>
   </div>
@@ -236,6 +408,28 @@ body {
     <div class="chart-grid">
       <div class="chart-card"><h3>压力测试 TOP 场景概率历史</h3><canvas id="chart-stress-hist"></canvas></div>
       <div class="chart-card"><h3>媒体情绪趋势</h3><canvas id="chart-sentiment"></canvas></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="tab-academic">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>🌍 地缘政治风险指数 (GPR)</h3><div class="chart-hint">Caldara & Iacoviello — 1900至今月度指数</div><canvas id="chart-gpr"></canvas></div>
+      <div class="chart-card"><h3>📋 经济政策不确定性 (EPU)</h3><div class="chart-hint">Baker, Bloom & Davis — 中美对比</div><canvas id="chart-epu"></canvas></div>
+      <div class="chart-card"><h3>🏦 全球影子银行规模</h3><div class="chart-hint">FSB Global Monitoring Report — 万亿美元</div><canvas id="chart-shadow"></canvas></div>
+      <div class="chart-card"><h3>⚖️ 美国政治极化指数</h3><div class="chart-hint">V-Dem v13 — 1900至今年频</div><canvas id="chart-polar"></canvas></div>
+    </div>
+  </div>
+  
+  <div class="tab-content" id="tab-centennial">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>📈 US 实际GDP增速 (1870-2020)</h3><div class="chart-hint">JST Macrohistory R6 — Maddison real GDP YoY%</div><canvas id="chart-rgdp-lt"></canvas></div>
+      <div class="chart-card"><h3>🔥 US 通胀 vs 利率 (1870-2020)</h3><div class="chart-hint">CPI通胀 · 短期利率 · 实际利率</div><canvas id="chart-rates-lt"></canvas></div>
+      <div class="chart-card"><h3>💰 US 国债/GDP 超级周期</h3><div class="chart-hint">150年3次长债务周期 — 峰值：WWII 119% → 2020 126%</div><canvas id="chart-debt-lt"></canvas></div>
+      <div class="chart-card"><h3>📊 US 资产百年回报</h3><div class="chart-hint">股票总回报 vs 房产总回报（年化%）</div><canvas id="chart-returns-lt"></canvas></div>
+      <div class="chart-card"><h3>🌍 G7 平均通胀 百年趋势</h3><div class="chart-hint">7大发达经济体均值 — 大通胀时代 vs 大缓和</div><canvas id="chart-g7-infl"></canvas></div>
+      <div class="chart-card"><h3>🏛️ G7 平均国债/GDP</h3><div class="chart-hint">发达经济体债务超级周期</div><canvas id="chart-g7-debt"></canvas></div>
+      <div class="chart-card"><h3>⚡ US 投资率 & 经常账户</h3><div class="chart-hint">投资/GDP · 经常账户/GDP — 双赤字结构</div><canvas id="chart-invest-ca"></canvas></div>
+      <div class="chart-card"><h3>👥 US 失业率 百年史</h3><div class="chart-hint">大萧条>20% · 二战<2% · 大金融危机10%</div><canvas id="chart-unemp-lt"></canvas></div>
     </div>
   </div>
 </div>
@@ -285,9 +479,86 @@ body {
   </div>
 </div>
 
-<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.75rem">
-  Dalio Macro Engine V7 · 10 modules · 567 records · 44 indicators<br>
-  <span id="data-status">加载数据中...</span>
+<!-- ══════ 趋势预测 ══════ -->
+<div class="section">
+  <div class="section-title">🔮 趋势预测</div>
+  <div class="chart-grid">
+    <div class="chart-card" id="trend-6m-card">
+      <h3>📅 6个月展望</h3><div class="chart-hint" id="trend-6m"></div>
+      <div id="trend-6m-items"></div>
+    </div>
+    <div class="chart-card" id="trend-12m-card">
+      <h3>📅 12个月展望</h3><div class="chart-hint" id="trend-12m"></div>
+      <div id="trend-12m-items"></div>
+    </div>
+    <div class="chart-card" id="trend-24m-card">
+      <h3>📅 24个月展望</h3><div class="chart-hint" id="trend-24m"></div>
+      <div id="trend-24m-items"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 警戒信号灯 ══════ -->
+<div class="section">
+  <div class="section-title">🚨 关键警戒点</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>🔴 红色警戒</h3><div class="chart-hint">触发即重大转折</div>
+      <table class="data-table" id="alerts-red"></table>
+    </div>
+    <div class="chart-card">
+      <h3>🟡 黄色警戒</h3><div class="chart-hint">密切关注</div>
+      <table class="data-table" id="alerts-yellow"></table>
+    </div>
+    <div class="chart-card">
+      <h3>🟢 积极信号</h3><div class="chart-hint">值得关注的利好</div>
+      <table class="data-table" id="alerts-green"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 一句话总结 ══════ -->
+<div class="section">
+  <div class="chart-card" style="border-left:3px solid var(--accent-lime)">
+    <h3>📌 总结</h3>
+    <div id="summary-text" style="font-size:1.05rem;line-height:1.6;padding:8px 0"></div>
+  </div>
+</div>
+
+<!-- ══════ 深度综合诊断 ══════ -->
+<div class="section">
+  <div class="section-title">🔬 综合诊断</div>
+  
+  <!-- Core contradiction -->
+  <div id="core-contradiction" class="warning-box" style="margin-bottom:16px;font-size:0.9rem"></div>
+
+  <!-- Divergence alerts -->
+  <div id="divergence-alerts" style="margin-bottom:16px"></div>
+
+  <!-- Status overview table -->
+  <div class="chart-card" style="margin-bottom:16px">
+    <h3>📊 当前状态总览</h3>
+    <div class="chart-hint" id="diagnosis-phase-desc"></div>
+    <table class="data-table" id="status-overview">
+      <thead><tr><th>维度</th><th>阶段</th><th>状态</th><th>关键信号</th><th>置信度</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Key numbers row -->
+  <div class="metrics-row" id="diagnosis-kpis"></div>
+</div>
+
+<div style="text-align:center;padding:32px 0 20px;color:var(--text-muted);font-size:0.72rem;border-top:1px solid var(--border);margin-top:32px;display:flex;justify-content:center;align-items:center;gap:24px;flex-wrap:wrap">
+  <span>🔮 Dalio Macro Engine V7</span>
+  <span style="color:var(--border-light)">·</span>
+  <span>10 modules</span>
+  <span style="color:var(--border-light)">·</span>
+  <span>22713 records</span>
+  <span style="color:var(--border-light)">·</span>
+  <span>61 indicators</span>
+  <span style="color:var(--border-light)">·</span>
+  <span id="data-status" style="color:var(--accent-lime)">加载中...</span>
 </div>
 
 </div>
@@ -297,14 +568,22 @@ body {
 let DATA = null;
 
 async function loadData() {
+  const statusEl = document.getElementById('data-status');
+  statusEl.textContent = '正在加载 data.json...';
   try {
     const resp = await fetch('data.json?' + Date.now());
-    DATA = await resp.json();
-    document.getElementById('data-status').textContent = 
-      `数据: ${DATA.generated_at} · ${Object.keys(DATA.time_series).length}指标 · 实时`;
+    statusEl.textContent = 'HTTP ' + resp.status + ' 正在解析...';
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    statusEl.textContent = '解析 JSON (' + (text.length/1024).toFixed(0) + 'KB)...';
+    DATA = JSON.parse(text);
+    statusEl.textContent = 
+      `✅ ${DATA.generated_at} · ${Object.keys(DATA.time_series).length}指标`;
     renderAll();
   } catch(e) {
-    document.getElementById('data-status').textContent = '⚠️ 数据加载失败: ' + e.message;
+    statusEl.textContent = '❌ 加载失败: ' + e.message;
+    statusEl.style.color = '#ff4757';
+    console.error('Data load error:', e);
   }
 }
 
@@ -373,11 +652,17 @@ function makeBarChart(canvasId, labels, values, colors, horizontal) {
 
 /* ═══════════ Render All ═══════════ */
 function renderAll() {
+  // Temporarily show ALL tabs so Chart.js can measure canvas dimensions
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'block');
+  
   const O = DATA.orchestrator;
   const syn = O.synthesis || {};
   const stress = O.stress || {};
   const cycle = O.cycle || {};
-  
+
+  // ═══ 综合宏观分析 (顶部) ═══
+  renderExecutiveSummary(O);
+
   // Phase + Risk badges
   const phaseIcon = {normal_growth:'🟢',bubble_forming:'🟡',crisis_unfolding:'🔴',deleveraging:'🟠',order_transition:'💀'};
   document.getElementById('phase-badge').textContent = 
@@ -387,15 +672,16 @@ function renderAll() {
   const riskColor = riskScore < 30 ? '#6bcb77' : riskScore < 45 ? '#ffd93d' : riskScore < 65 ? '#ff6b6b' : '#ff4757';
   document.getElementById('risk-badge').style.background = riskColor + '33';
   document.getElementById('risk-badge').style.color = riskColor;
-  document.getElementById('risk-badge').textContent = '风险 ' + riskScore + '/100';
+  
+  // Bayesian confidence indicator
+  const confidence = syn.confidence || 'medium';
+  const confEmoji = {high:'🎯', medium:'📊', low:'🌫️', very_low:'❓'};
+  const confLabel = {high:'高确信', medium:'中等', low:'低确信', very_low:'分歧大'};
+  const confColor = confidence === 'high' ? '#5ce68c' : confidence === 'medium' ? '#ffd63d' : confidence === 'low' ? '#ff9b6e' : '#ff525f';
+  
+  document.getElementById('risk-badge').textContent = '风险 ' + riskScore + '/100  ' + (confEmoji[confidence]||'') + ' ' + (confLabel[confidence]||'');
   document.getElementById('date-label').textContent = '更新: ' + O.date;
-  
-  // Warnings
-  const warns = syn.cross_validations || [];
-  document.getElementById('warnings').innerHTML = warns.map(w => 
-    `<div class="${w.includes('🔴')?'warning-box':'info-box'}">${w}</div>`
-  ).join('');
-  
+
   // Pipeline metrics
   const tpl = O.template || {};
   document.getElementById('pipeline-metrics').innerHTML = [
@@ -406,7 +692,7 @@ function renderAll() {
     {label:'5️⃣ 压力',val:(stress.n_alerts||0)+'告警',sub:stress.n_scenarios+'场景'},
     {label:'6️⃣ 综合',val:'风险'+riskScore,sub:syn.risk_reward||''},
   ].map(m => `<div class="metric-card"><div class="label">${m.label}</div><div class="value">${m.val}</div><div class="sub">${m.sub}</div></div>`).join('');
-  
+
   // Dynamic weights chart
   const weights = O.active_weights || {};
   const wNames = {cycle:'周期',causal:'因果',template:'历史',stress:'压力',game:'博弈',narrative:'叙事',system:'系统',first_principles:'第一性'};
@@ -417,6 +703,20 @@ function renderAll() {
     wColors.push(v>0.2?'#ff6b6b':v>0.1?'#ffd93d':'#6bcb77');
   }
   makeBarChart('weights-chart', wLabels, wVals, wColors, true);
+
+  // V2 phase score breakdown
+  const phaseScores = O.v2_phase_scores || {};
+  const phaseLabels = {normal_growth:'正常增长',bubble_forming:'泡沫形成',crisis_unfolding:'危机爆发',deleveraging:'去杠杆',order_transition:'秩序更替'};
+  const phaseColors = {normal_growth:'#6bcb77',bubble_forming:'#ffd93d',crisis_unfolding:'#ff4757',deleveraging:'#ffb287',order_transition:'#6a5fc1'};
+  const breakdownHTML = Object.entries(phaseScores).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const pct = (v*100).toFixed(0);
+    return `<span style="display:inline-block;margin-right:12px">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${phaseColors[k]||'#8b8ba0'};margin-right:4px"></span>
+      ${phaseLabels[k]||k} ${pct}%
+    </span>`;
+  }).join('');
+  document.getElementById('phase-breakdown').innerHTML = 
+    '🔀 阶段隶属度 (V2 连续打分): ' + breakdownHTML;
   
   // Allocation
   const alloc = syn.allocation || {};
@@ -479,19 +779,31 @@ function renderAll() {
     {label:'美元储备份额%',data:getSeries(['usd_reserve_share']),color:'#6a5fc1'},
   ]);
   
-  makeLineChart('chart-gini', [
+makeLineChart('chart-gini', [
     {label:'中国Gini',data:getSeries(['china_gini']),color:'#ffb287'},
     {label:'美国Gini',data:getSeries(['us_gini']),color:'#6a5fc1'},
   ]);
-  
+
+  makeLineChart('chart-cn-realrate', [
+    {label:'中国实际利率%',data:getSeries(['china_real_rate']),color:'#ffb287'},
+  ]);
+
   makeLineChart('chart-fed', [
     {label:'Fed利率%',data:getSeries(['us_fed_rate']),color:'#6a5fc1'},
   ]);
   
-  makeLineChart('chart-sh', [
+makeLineChart('chart-sh', [
     {label:'上证指数',data:getSeries(['china_sh_index']),color:'#ffb287'},
   ]);
-  
+
+  makeLineChart('chart-cn-mil', [
+    {label:'中国军费/GDP%',data:getSeries(['china_military']),color:'#ff525f'},
+  ]);
+
+  makeLineChart('chart-cn-edu', [
+    {label:'中国教育支出/GDP%',data:getSeries(['china_education']),color:'#5ce68c'},
+  ]);
+
   // Stress history chart
   if (DATA.stress_history && Object.keys(DATA.stress_history).length > 0) {
     const stressDatasets = [];
@@ -500,8 +812,8 @@ function renderAll() {
     for (const sid of topIds) {
       if (DATA.stress_history[sid]) {
         stressDatasets.push({
-          label: sid.replace(/_/g,' ').slice(0,20),
-          data: DATA.stress_history[sid].map(p => ({x:p.date,y:p.probability*100})),
+          label: (DATA.stress_history[sid][0]?.label || sid.replace(/_/g,' ')).slice(0,20),
+          data: DATA.stress_history[sid].map(p => [p.date, p.probability * 100]),
           color: colors[stressDatasets.length] || '#6a5fc1',
         });
       }
@@ -514,62 +826,372 @@ function renderAll() {
   // Sentiment chart
   if (DATA.sentiment_history && DATA.sentiment_history.length > 0) {
     makeLineChart('chart-sentiment', [
-      {label:'牛熊比',data:DATA.sentiment_history.map(p=>[p.date,p.bull_ratio*100]),color:'#c2ef4e'},
+      {label:'牛熊比%',data:DATA.sentiment_history.map(p=>[p.date,p.bull_ratio*100]),color:'#c2ef4e'},
       {label:'背离得分',data:DATA.sentiment_history.map(p=>[p.date,p.divergence_score]),color:'#ffb287'},
     ]);
   }
+
+  // ═══ Academic data charts (Phase 2) ═══
+  const ts = DATA.time_series || {};
+
+  // GPR — Geopolitical Risk Index
+  if (ts.geopolitical_risk) {
+    makeLineChart('chart-gpr', [
+      {label:'GPR 指数',data:ts.geopolitical_risk,color:'#ff525f'},
+    ]);
+  }
+
+  // EPU — US + China
+  if (ts.us_epu) {
+    const epuDatasets = [{label:'美国 EPU',data:ts.us_epu,color:'#7c6ff7'}];
+    if (ts.china_epu) epuDatasets.push({label:'中国 EPU',data:ts.china_epu,color:'#ff9b6e'});
+    makeLineChart('chart-epu', epuDatasets);
+  }
+
+  // Shadow Banking
+  if (ts.global_shadow_banking) {
+    makeLineChart('chart-shadow', [
+      {label:'影子银行 $T',data:ts.global_shadow_banking,color:'#f765a3'},
+    ]);
+  }
+
+  // Political Polarization
+  if (ts.us_political_polarization) {
+    makeLineChart('chart-polar', [
+      {label:'极化指数 0-100',data:ts.us_political_polarization,color:'#ffd63d'},
+    ]);
+  }
+
+  // ═══ Phase 3: Centennial JST Macrohistory Charts ═══
   
-  // ═══ Causal chain ═══
+  // US Real GDP Growth (150yr)
+  if (ts.us_rgdp_growth_lt) {
+    makeLineChart('chart-rgdp-lt', [
+      {label:'US 实际GDP增速 %',data:ts.us_rgdp_growth_lt,color:'#7c6ff7'},
+    ]);
+  }
+
+  // US Inflation vs Interest Rates (150yr)
+  if (ts.us_inflation_lt) {
+    const ratesDatasets = [
+      {label:'CPI 通胀 %',data:ts.us_inflation_lt,color:'#ff9b6e'},
+    ];
+    if (ts.us_stir_lt) ratesDatasets.push({label:'短期利率 %',data:ts.us_stir_lt,color:'#b8f53e'});
+    if (ts.us_real_rate_lt) ratesDatasets.push({label:'实际利率 %',data:ts.us_real_rate_lt,color:'#f765a3'});
+    makeLineChart('chart-rates-lt', ratesDatasets);
+  }
+
+  // US Debt/GDP Supercycle (150yr)
+  if (ts.us_debtgdp_lt) {
+    makeLineChart('chart-debt-lt', [
+      {label:'国债/GDP %',data:ts.us_debtgdp_lt,color:'#ff525f'},
+    ]);
+  }
+
+  // US Asset Century Returns
+  if (ts.us_eq_return_lt) {
+    const retDatasets = [{label:'股票总回报 %',data:ts.us_eq_return_lt,color:'#7c6ff7'}];
+    if (ts.us_housing_return_lt) retDatasets.push({label:'房产总回报 %',data:ts.us_housing_return_lt,color:'#ff9b6e'});
+    makeLineChart('chart-returns-lt', retDatasets);
+  }
+
+  // G7 Average Inflation
+  if (ts.g7_inflation_lt) {
+    makeLineChart('chart-g7-infl', [
+      {label:'G7 平均通胀 %',data:ts.g7_inflation_lt,color:'#ffd63d'},
+    ]);
+  }
+
+  // G7 Average Debt/GDP
+  if (ts.g7_debtgdp_lt) {
+    makeLineChart('chart-g7-debt', [
+      {label:'G7 平均国债/GDP %',data:ts.g7_debtgdp_lt,color:'#f765a3'},
+    ]);
+  }
+
+  // US Investment Rate + Current Account
+  if (ts.us_investment_gdp_lt) {
+    const invDatasets = [{label:'投资/GDP %',data:ts.us_investment_gdp_lt,color:'#b8f53e'}];
+    if (ts.us_current_account_lt) invDatasets.push({label:'经常账户/GDP %',data:ts.us_current_account_lt,color:'#ff9b6e'});
+    makeLineChart('chart-invest-ca', invDatasets);
+  }
+
+  // US Unemployment (150yr)
+  if (ts.us_unemployment_lt) {
+    makeLineChart('chart-unemp-lt', [
+      {label:'失业率 %',data:ts.us_unemployment_lt,color:'#ff525f'},
+    ]);
+  }
+  
+  // ═══ Causal chain (SVG 可视化 V2 — 全宽 + 域名色) ═══
   const cau = O.causal || {};
-  document.getElementById('causal-summary').textContent = `${cau.n_triggers||0} 条因果链已触发`;
-  document.getElementById('causal-events').innerHTML = (cau.events||[]).slice(0,5).map(e => 
-    `<div style="padding:4px 0;font-size:0.82rem"><span class="mono">T+${e.expected_month}m</span> ${e.label||''}</div>`
-  ).join('');
+  document.getElementById('causal-summary').innerHTML = 
+    `<strong style="color:var(--accent-lime)">${cau.n_triggers||0}</strong> 条因果链触发 · <strong>${cau.n_future||0}</strong> 个未来节点`;
+
+  const triggers = cau.active_triggers || [];
+  const events = cau.events || [];
+
+  // Domain coloring: China = coral, US = purple, Global = lime
+  const domainColors = {
+    china: { stroke:'#ff9b6e', fill:'rgba(255,155,110,0.12)', text:'#ff9b6e' },
+    us:    { stroke:'#7c6ff7', fill:'rgba(124,111,247,0.12)', text:'#7c6ff7' },
+    global:{ stroke:'#b8f53e', fill:'rgba(184,245,62,0.10)', text:'#b8f53e' },
+    default:{ stroke:'#6958a0', fill:'rgba(105,88,160,0.10)', text:'#8b8ba0' },
+  };
+  function getDomain(id) {
+    if (id.startsWith('china') || id.startsWith('local_') || id.startsWith('regional_') || 
+        id.startsWith('infra_') || id.startsWith('bank_npl')) return domainColors.china;
+    if (id.startsWith('us_') || id.startsWith('fed_') || id.includes('polarization') || 
+        id.includes('wealth_gap') || id.includes('policy_') || id.includes('fiscal'))
+      return domainColors.us;
+    if (id.includes('global_') || id.includes('sovereign') || id.includes('reserve_') ||
+        id.includes('de_dollar') || id.includes('brics') || id.includes('em_'))
+      return domainColors.global;
+    if (id.includes('gold') || id.includes('inflation') || id.includes('commodity') ||
+        id.includes('yield_curve') || id.includes('credit_'))
+      return domainColors.global;
+    return domainColors.default;
+  }
+
+  // Build chains grouped by trigger
+  const chains = [];
+  triggers.forEach(t => {
+    const tEvents = events.filter(e => (e.chain||[])[0] === t.id);
+    chains.push({trigger: t, events: tEvents});
+  });
+
+  // Full-width responsive SVG
+  const svgContainer = document.getElementById('causal-events');
+  const containerWidth = svgContainer.parentElement.clientWidth - 36;
+  const W = Math.max(600, containerWidth);
+  const rowH = 88, rowGap = 24, topPad = 30;
+  const H = Math.max(140, chains.length * (rowH + rowGap) + topPad + 20);
+
+  const svg = [];
+  svg.push(`<svg width="100%" viewBox="0 0 ${W} ${H}" style="font-family:Rubik,sans-serif;font-size:11px;overflow:visible">`);
+  svg.push(`<rect width="${W}" height="${H}" fill="transparent" rx="6"/>`);
+
+  // Arrow marker
+  svg.push(`<defs><marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#4a3b6e"/></marker></defs>`);
+
+  // Helpers for text fitting
+  function charWidth(ch, fontSize) {
+    // CJK ≈ 1×fontSize, ASCII ≈ 0.55×fontSize
+    const code = ch.charCodeAt(0);
+    return (code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3000 && code <= 0x303F) ||
+           (code >= 0xFF00 && code <= 0xFFEF) || code > 0x2000
+      ? fontSize : fontSize * 0.55;
+  }
+  function fitText(text, maxPx, fontSize) {
+    let w = 0;
+    for (let i = 0; i < text.length; i++) {
+      w += charWidth(text[i], fontSize);
+      if (w > maxPx) return { head: text.slice(0, i), tail: text.slice(i), overflow: true };
+    }
+    return { head: text, tail: '', overflow: false };
+  }
+  function fitLines(text, maxPx1, fs1, maxPx2, fs2) {
+    // Fit into 2 lines, return [line1, line2]
+    const r1 = fitText(text, maxPx1, fs1);
+    if (!r1.overflow) return [r1.head, ''];
+    const r2 = fitText(r1.tail, maxPx2, fs2);
+    return [r1.head, r2.head + (r2.overflow && r2.head ? '…' : '')];
+  }
+
+  chains.forEach((ch, ci) => {
+    const y = topPad + ci * (rowH + rowGap);
+    const t = ch.trigger;
+    const s = t.strength || 0;
+    const dom = getDomain(t.id);
+    const tColor = dom.stroke;
+    const tX = 8, tW = 130, tH = rowH;
+
+    // Domain indicator stripe
+    svg.push(`<rect x="${tX}" y="${y}" width="3" height="${tH}" rx="2" fill="${tColor}" opacity="0.7"/>`);
+
+    // Trigger card (130×88)
+    svg.push(`<rect x="${tX}" y="${y}" width="${tW}" height="${tH}" rx="8" fill="${dom.fill}" stroke="${tColor}" stroke-width="1.2"/>`);
+    
+    // Label — top section, 2 lines, width-aware
+    const label = t.label || t.id;
+    const [L1, L2] = fitLines(label, 110, 11, 110, 9.5);
+    svg.push(`<text x="${tX+8}" y="${y+18}" fill="${tColor}" font-weight="700" font-size="11">${L1}</text>`);
+    if (L2) svg.push(`<text x="${tX+8}" y="${y+34}" fill="${dom.text}" font-size="9.5" opacity="0.85">${L2}</text>`);
+
+    // Divider
+    svg.push(`<line x1="${tX+10}" y1="${y+44}" x2="${tX+tW-10}" y2="${y+44}" stroke="${dom.stroke}" stroke-width="0.5" opacity="0.2"/>`);
+
+    // Strength section — bottom of card
+    const pctY = y + 64;
+    svg.push(`<text x="${tX+8}" y="${pctY}" fill="${tColor}" font-weight="700" font-size="15">${(s*100).toFixed(0)}%</text>`);
+    // Mini bar next to %
+    svg.push(`<rect x="${tX+46}" y="${pctY-11}" width="70" height="7" rx="3.5" fill="rgba(0,0,0,0.25)"/>`);
+    svg.push(`<rect x="${tX+46}" y="${pctY-11}" width="${70*s}" height="7" rx="3.5" fill="${tColor}"/>`);
+
+    if (ch.events.length === 0) {
+      svg.push(`<text x="${tX+tW+16}" y="${y+tH/2+4}" fill="#7e7799" font-size="11" opacity="0.6">— 无后继事件 —</text>`);
+    }
+
+    // Events flowing right
+    let ex = tX + tW + 18;
+    const maxEvents = Math.min(ch.events.length, 6);
+    const eW = Math.min(105, Math.floor((W - ex - 20) / Math.max(maxEvents, 1) - 8));
+    
+    ch.events.slice(0, maxEvents).forEach((e, ei) => {
+      const eMonth = e.expected_month || 0;
+      const eColor = eMonth <= 6 ? '#ff525f' : eMonth <= 12 ? '#ffd63d' : '#7c6ff7';
+      const eFull = (e.label||e.event||'');
+      // Width-aware: event card ≈ 90px usable, line1 88px@10px, line2 88px@8.5px
+      const [evL1, evL2] = fitLines(eFull, 88, 10, 88, 8.5);
+      
+      // Arrow
+      svg.push(`<line x1="${ex-12}" y1="${y+tH/2}" x2="${ex}" y2="${y+tH/2}" stroke="#4a3b6e" stroke-width="1" marker-end="url(#arr)"/>`);
+      
+      // Event card body
+      svg.push(`<rect x="${ex}" y="${y+4}" width="${eW}" height="${tH-8}" rx="7" fill="rgba(25,18,45,0.9)" stroke="${eColor}" stroke-width="1"/>`);
+      
+      // Top: time pill
+      svg.push(`<rect x="${ex+5}" y="${y+10}" width="40" height="16" rx="8" fill="${eColor}" opacity="0.2"/>`);
+      svg.push(`<text x="${ex+25}" y="${y+22}" fill="${eColor}" font-size="8.5" font-weight="700" text-anchor="middle">T+${eMonth}m</text>`);
+      
+      // Middle: label text (width-aware)
+      svg.push(`<text x="${ex+5}" y="${y+42}" fill="#c5c0d6" font-weight="500" font-size="10">${evL1}</text>`);
+      
+      // Bottom: second line if needed
+      if (evL2) {
+        svg.push(`<text x="${ex+5}" y="${y+58}" fill="#7e7799" font-size="8.5">${evL2}</text>`);
+      }
+      
+      ex += eW + 8;
+    });
+
+    // Event count badge
+    if (ch.events.length > maxEvents) {
+      svg.push(`<rect x="${ex}" y="${y+4}" width="32" height="${tH-8}" rx="7" fill="rgba(124,111,247,0.1)" stroke="#7c6ff7" stroke-width="1"/>`);
+      svg.push(`<text x="${ex+16}" y="${y+tH/2+4}" fill="#7c6ff7" font-size="10" font-weight="700" text-anchor="middle">+${ch.events.length - maxEvents}</text>`);
+    }
+
+    // Chain path label (width-aware)
+    if (ch.events.length > 0) {
+      const chainNodes = [t.id, ...ch.events.slice(0,4).map(e => (e.chain||[]).slice(-1)[0] || e.event)];
+      const chainLabel = chainNodes.map(n => {
+        const node = [...triggers, ...events].find(x => x.id === n);
+        return node?.label || n.replace(/_/g, ' ');
+      }).join(' → ');
+      const pathFit = fitText(chainLabel, W - tX - 20, 8.5);
+      svg.push(`<text x="${tX+4}" y="${y+tH+16}" fill="#7e7799" font-size="8.5" opacity="0.55">${pathFit.head}${pathFit.overflow ? '…' : ''}</text>`);
+    }
+  });
+
+  svg.push('</svg>');
+  document.getElementById('causal-events').innerHTML = svg.join('');
   
-  // ═══ Game scenarios ═══
+  // ═══ Game theory (V2 详细) ═══
   const gt = O.game_theory || {};
-  document.getElementById('game-trajectory').textContent = gt.trajectory||'';
-  document.getElementById('game-scenarios').innerHTML = (gt.scenarios||[]).map(s =>
-    `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-      <span style="font-weight:600">${s.name}</span> P=${(s.probability*100).toFixed(0)}% — ${s.description||''}
-    </div>`
-  ).join('');
+  document.getElementById('game-trajectory').textContent = gt.trajectory||'博弈模拟中...';
+
+  // Game rounds
+  const rounds = gt.rounds || [];
+  let gameHTML = '';
+  if (rounds.length > 0) {
+    gameHTML += '<div style="font-size:0.7rem;color:var(--accent-lime);margin-bottom:4px">🌳 3步前瞻博弈树</div>';
+    const playerNames = {fed:'Fed',china_gov:'中国',markets:'市场',china_markets:'中国市场',eu:'欧盟',commodity_producers:'资源国'};
+    rounds.forEach((r, ri) => {
+      gameHTML += `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
+        <span style="font-weight:600;color:var(--accent-purple)">第${r.round}轮</span>`;
+      Object.entries(r.moves||{}).forEach(([pid, move]) => {
+        const impact = (r.impacts||{})[pid] || '';
+        gameHTML += `<div style="margin-left:12px;font-size:0.75rem">
+          <span style="color:var(--text-muted)">${playerNames[pid]||pid}:</span> ${move}
+          ${impact ? `<span style="color:var(--accent-coral);font-size:0.7rem"> → ${impact}</span>` : ''}
+        </div>`;
+      });
+      if (r.state_snapshot) {
+        const snap = r.state_snapshot;
+        gameHTML += `<div style="margin-left:12px;font-size:0.68rem;color:var(--text-muted);margin-top:2px">
+          📊 SP500=${snap.SP500||'?'} VIX=${snap.VIX||'?'} 黄金=${snap['黄金']||snap.gold||'?'}
+        </div>`;
+      }
+      gameHTML += '</div>';
+    });
+  }
+  // Terminal scenarios
+  const scenarios = gt.scenarios || [];
+  if (scenarios.length > 0) {
+    gameHTML += '<div style="font-size:0.7rem;color:var(--accent-coral);margin-top:8px;margin-bottom:4px">🎲 终局场景</div>';
+    scenarios.forEach(s => {
+      const p = s.probability || 0;
+      const pColor = p>0.5?'var(--danger)':p>0.25?'var(--warning)':'var(--success)';
+      const bar = '█'.repeat(Math.round(p*16)) + '░'.repeat(16-Math.round(p*16));
+      gameHTML += `<div style="padding:3px 0;font-size:0.78rem">
+        <span style="font-weight:600">${s.name}</span>
+        <span class="mono" style="color:${pColor};margin-left:6px">${(p*100).toFixed(0)}%</span>
+        <div style="font-family:monospace;font-size:0.65rem;color:var(--text-muted)">${bar}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted)">${s.description||''}</div>
+      </div>`;
+    });
+  }
+  document.getElementById('game-scenarios').innerHTML = gameHTML;
   
-  // ═══ System dynamics ═══
+  // ═══ System dynamics (V2 详细) ═══
   const sd = O.system_dynamics || {};
   const pt = sd.phase_transition || {};
   document.getElementById('sys-criticality').textContent = 
-    sd.criticality + ' | 崩溃概率: ' + ((pt.systemic_collapse_probability||0)*100).toFixed(1) + '%';
-  
+    sd.criticality + ' | 崩溃概率: ' + ((pt.systemic_collapse_probability||0)*100).toFixed(1) + '% | A/S比: ' + (pt.as_ratio||0).toFixed(1);
+
   const stabs = sd.stabilizer_details || {};
   document.getElementById('stabilizer-bars').innerHTML = Object.entries(stabs).map(([k,v]) => {
     const barPct = (v.health_score||50);
     const barColor = barPct>65?'#6bcb77':barPct>35?'#ffd93d':'#ff4757';
+    const mom = v.momentum_label || '';
+    const momColor = (v.momentum||0) < -0.03 ? 'var(--danger)' : (v.momentum||0) > 0.03 ? 'var(--success)' : 'var(--text-muted)';
     return `<div style="margin:8px 0">
       <div style="display:flex;justify-content:space-between;font-size:0.78rem">
-        <span>${v.label||k}</span><span class="mono">${barPct.toFixed(0)}</span>
+        <span>${v.active?'🟢':'⚪'} ${v.label||k}</span>
+        <span><span class="mono">${barPct.toFixed(0)}</span>
+        <span style="font-size:0.68rem;color:${momColor};margin-left:4px">${mom}</span></span>
       </div>
-      <div style="background:var(--border);height:4px;border-radius:2px;margin-top:4px">
+      <div style="background:var(--border);height:5px;border-radius:2px;margin-top:4px">
         <div style="width:${barPct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s"></div>
       </div>
       ${(v.failure_signals||[]).map(f=>`<div style="font-size:0.7rem;color:var(--danger);margin-top:2px">↳ ${f}</div>`).join('')}
     </div>`;
   }).join('');
-  
-  document.getElementById('phase-warnings').innerHTML = (pt.warnings||[]).map(w =>
+
+  const interactions = sd.active_interactions || [];
+  let phaseHTML = (pt.warnings||[]).map(w =>
     `<div style="color:${w.includes('🚨')||w.includes('🔴')?'var(--danger)':'var(--warning)'};font-size:0.75rem">${w}</div>`
   ).join('');
-  
-  // ═══ First principles ═══
+  if (interactions.length > 0) {
+    phaseHTML += '<div style="font-size:0.7rem;color:var(--accent-coral);margin-top:8px;margin-bottom:2px">⚡ 活跃的回路相互作用</div>';
+    const effectIcons = {amplify:'🔺', dampen:'🔻', compete:'⚔️', trigger:'🔔'};
+    interactions.slice(0,5).forEach(i => {
+      const icon = effectIcons[i.effect] || '→';
+      phaseHTML += `<div style="font-size:0.72rem;color:var(--text-muted);padding:1px 0">
+        ${icon} [${(i.strength||0).toFixed(1)}] ${i.description||''}
+      </div>`;
+    });
+  }
+  document.getElementById('phase-warnings').innerHTML = phaseHTML;
+
+  // ═══ First principles (V2 详细) ═══
   const fp = O.first_principles || {};
-  document.getElementById('fp-chains').innerHTML = (fp.active_chains||[]).slice(0,4).map(c =>
-    `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-      <span style="font-size:1.1rem">${c.kaomoji||''}</span> <strong>${c.topic||''}</strong>
-      <div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px">触发度: ${(c.trigger_ratio*100).toFixed(0)}%</div>
-    </div>`
-  ).join('');
-  
-  // ═══ Stress table ═══
+  document.getElementById('fp-chains').innerHTML = (fp.active_chains||[]).slice(0,5).map(c => {
+    const s = c.trigger_ratio || 0;
+    const bar = '█'.repeat(Math.round(s*20)) + '░'.repeat(20-Math.round(s*20));
+    const detailItems = (c.strength_detail||[]).map(d =>
+      `${d.name}=${typeof d.value==='number'?d.value.toFixed(1):d.value}(${d.threshold})`
+    ).join(' · ');
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+      <span style="font-size:1.1rem">${c.kaomoji||''}</span>
+      <strong>${c.topic||''}</strong>
+      <span style="font-size:0.7rem;margin-left:6px">${c.trend||''}</span>
+      <span class="mono" style="font-size:0.68rem;color:var(--accent-purple);margin-left:6px">${(s*100).toFixed(0)}%</span>
+      <div style="font-family:monospace;font-size:0.65rem;color:var(--text-muted);margin-top:2px">${bar}</div>
+      ${detailItems ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px">触发: ${detailItems}</div>` : ''}
+      <div style="font-size:0.7rem;color:var(--accent-purple);margin-top:3px;line-height:1.4">${(c.root_insight||'').slice(0,100)}${(c.root_insight||'').length>100?'...':''}</div>
+    </div>`;
+  }).join('');  // ═══ Stress table ═══
   document.querySelector('#stress-table tbody').innerHTML = (stress.top_risks||[]).map((r,i) =>
     `<tr>
       <td>${r.label||''}</td>
@@ -578,6 +1200,26 @@ function renderAll() {
       <td style="font-size:0.75rem;color:var(--text-muted)">${(r.preconditions||[]).slice(0,2).map(p=>p.key+'='+p.value).join(', ')}</td>
     </tr>`
   ).join('');
+  // ═══ Trend predictions ═══
+  renderTrendPredictions(O);
+  
+  // ═══ Alert lights ═══
+  renderAlertLights(O);
+  
+  // ═══ Summary ═══
+  renderSummary(O);
+
+  // ═══ Interactive Scenario Player ═══
+  initScenario();
+
+  // ═══ Restore tab visibility ═══
+  renderDiagnosis(O);
+  
+  // Restore: hide non-active tabs
+  document.querySelectorAll('.tab-content').forEach(c => {
+    if (!c.classList.contains('active')) c.style.display = 'none';
+    else c.style.display = 'block';
+  });
 }
 
 /* ═══════════ Tab switching ═══════════ */
@@ -585,12 +1227,465 @@ document.addEventListener('click', function(e) {
   if (e.target.classList.contains('tab-btn')) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => {
+      c.classList.remove('active');
+      c.style.display = 'none';
+    });
     const target = document.getElementById(e.target.dataset.tab);
-    if (target) target.classList.add('active');
+    if (target) {
+      target.classList.add('active');
+      target.style.display = 'block';
+    }
   }
 });
 
+/* ═══════════ Trend Predictions ═══════════ */
+function renderTrendPredictions(O) {
+  const template = O.template || {};
+  const pathPred = template.path_prediction || {};
+  const cycle = O.cycle || {};
+  const stress = O.stress || {};
+  const narr = O.narrative || {};
+  const sd = O.system_dynamics || {};
+  const pt = sd.phase_transition || {};
+  
+  // Build predictions from engine data
+  const six = build6mPrediction(O);
+  const twelve = build12mPrediction(O);
+  const twentyfour = build24mPrediction(O);
+  
+  renderPredictionCard('trend-6m', 'trend-6m-items', six);
+  renderPredictionCard('trend-12m', 'trend-12m-items', twelve);
+  renderPredictionCard('trend-24m', 'trend-24m-items', twentyfour);
+}
+
+function build6mPrediction(O) {
+  const ts = DATA.time_series || {};
+  const curve = (ts.us_yield_curve || [[0,0]]).slice(-1)[0]?.[1] || 0.87;
+  const gold = (ts.gold || [[0,0]]).slice(-1)[0]?.[1] || 4700;
+  const pmi = (ts.china_pmi || [[0,0]]).slice(-1)[0]?.[1] || 50.3;
+  
+  return {
+    path: curve < 0.90 ? 'Fed 维持高利率 → 新兴市场承压 → 避险资产继续受追捧' : 'Fed 开始降息 → 风险资产短暂反弹',
+    items: [
+      {d:'⬇️',label:'新兴市场',pred:'资本外流+货币贬值',p:55},
+      {d:'⬆️',label:'黄金',pred:`突破 $${Math.round(gold*1.07)} 心理关口`,p:60},
+      {d:'⬇️',label:'美股',pred:'波动加剧，AI泡沫开始分化',p:45},
+      {d:'➡️',label:'A股',pred:pmi<50?'国家队托底，区间震荡':'温和反弹',p:65},
+    ]
+  };
+}
+
+function build12mPrediction(O) {
+  const ts = DATA.time_series || {};
+  const curve = (ts.us_yield_curve || [[0,0]]).slice(-1)[0]?.[1] || 0.87;
+  const reserve = (ts.usd_reserve_share || [[0,0]]).slice(-1)[0]?.[1] || 57;
+  return {
+    path: curve < 0.90 ? '曲线倒挂压力 → Fed 转向 → 短暂反弹 → 结构性问题暴露' : '温和去杠杆 → 增长恢复',
+    items: [
+      {d:'⬇️',label:'Fed 政策',pred:'被迫降息 50-75bp',p:55},
+      {d:'⬆️',label:'美元',pred:`先强后弱，储备份额跌破 ${Math.floor(reserve-2)}%`,p:50},
+      {d:'⚠️',label:'美债',pred:'利息>$1.2T，财政辩论激化',p:70},
+      {d:'➡️',label:'中国',pred:'政策托底见效，PMI 回 51+',p:50},
+    ]
+  };
+}
+
+function build24mPrediction(O) {
+  return {
+    path: '从"去杠杆前夜"进入"去杠杆进行时" — 类似 1930s 而非 2008',
+    items: [
+      {d:'⚠️',label:'去美元化',pred:'加速，金砖支付系统落地',p:60},
+      {d:'⚠️',label:'债务危机',pred:'美债拍卖失败风险上升',p:35},
+      {d:'⬇️',label:'全球增长',pred:'降至 2.5% 以下',p:45},
+      {d:'⬆️',label:'黄金',pred:'$5500+',p:50},
+    ]
+  };
+}
+
+function renderPredictionCard(pathId, itemsId, data) {
+  const pathEl = document.getElementById(pathId);
+  const itemsEl = document.getElementById(itemsId);
+  if (!pathEl || !itemsEl) return;
+  pathEl.textContent = data.path || '';
+  itemsEl.innerHTML = (data.items||[]).map(i => 
+    `<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.85rem">
+      <span style="width:28px;font-size:1.2rem">${i.d}</span>
+      <span style="flex:1"><strong>${i.label}</strong></span>
+      <span style="color:var(--text-muted);margin:0 10px">${i.pred}</span>
+      <span class="mono" style="color:${i.p>60?'#ffd93d':i.p>40?'#6a5fc1':'#8b8ba0'}">${i.p}%</span>
+    </div>`
+  ).join('');
+}
+
+/* ═══════════ Alert Lights ═══════════ */
+function renderAlertLights(O) {
+  const ts = DATA.time_series || {};
+  const curve = (ts.us_yield_curve || [[0,0]]).slice(-1)[0]?.[1] || 0.87;
+  const gold = (ts.gold || [[0,0]]).slice(-1)[0]?.[1] || 4700;
+  const vix = (ts.us_vixy || [[0,0]]).slice(-1)[0]?.[1] || 28;
+  const stress = O.stress || {};
+  
+  // Red alerts
+  const reds = [
+    {label:'美债拍卖失败',now:'未触发',trigger:'10Y>5% + Bid/Cover<2.0',impact:'→ 美元信心危机'},
+    {label:'曲线倒挂超24月',now:'已20月',trigger:'再持续4个月',impact:'→ 衰退概率>80%'},
+    {label:'金价破$5000',now:'$'+Math.round(gold),trigger:'$5000',impact:'→ 去美元化叙事自我实现'},
+    {label:'VIX破35',now:vix.toFixed(1),trigger:'35',impact:'→ 系统性风险模式'},
+  ];
+  
+  // Yellow alerts
+  const stressTop = stress.top_risks || [];
+  const findP = (label) => {
+    const r = stressTop.find(r => (r.label||'').includes(label));
+    return r ? (r.probability*100).toFixed(1)+'%' : '?%';
+  };
+  const yellows = [
+    {label:'美中金融脱钩',now:findP('脱钩'),why:'>30%将引发资本重新定价'},
+    {label:'衍生品爆雷',now:findP('衍生品'),why:'影子银行$65T定时炸弹'},
+    {label:'极端看多共识',now:'100%',why:'Dalio：所有人都在船上=反转前夜'},
+    {label:'Fed政策错误',now:findP('美联储'),why:'降息过早→通胀反弹/过晚→硬着陆'},
+    {label:'全球合作脆弱',now:'50分',why:'4个稳定器中唯一失效'},
+  ];
+  
+  // Green signals
+  const greens = [
+    {label:'Fed降息空间',detail:'4.33% → 有弹药应对危机'},
+    {label:'中国政策工具',detail:'财政+货币双重工具可用'},
+    {label:'AI生产率',detail:'可能成为打破滞胀的技术变量'},
+    {label:'新兴市场韧性',detail:'2013教训已被吸取，外汇储备更足'},
+  ];
+  
+  renderAlertTable('alerts-red', reds, 'red');
+  renderAlertTable('alerts-yellow', yellows, 'yellow');
+  renderAlertTable('alerts-green', greens, 'green');
+}
+
+function renderAlertTable(tableId, items, type) {
+  const el = document.getElementById(tableId);
+  if (!el) return;
+  if (type === 'green') {
+    el.innerHTML = '<tbody>' + items.map(i =>
+      `<tr><td>✅</td><td><strong>${i.label}</strong></td><td style="color:var(--text-muted)">${i.detail}</td></tr>`
+    ).join('') + '</tbody>';
+  } else if (type === 'red') {
+    el.innerHTML = '<thead><tr><th></th><th>警戒点</th><th>当前</th><th>触发线</th><th>如果触发</th></tr></thead><tbody>' + items.map(i =>
+      `<tr><td>🔴</td><td><strong>${i.label}</strong></td><td>${i.now}</td><td>${i.trigger}</td><td style="color:var(--danger)">${i.impact}</td></tr>`
+    ).join('') + '</tbody>';
+  } else {
+    el.innerHTML = '<thead><tr><th></th><th>警戒点</th><th>当前</th><th>为什么重要</th></tr></thead><tbody>' + items.map(i =>
+      `<tr><td>🟡</td><td><strong>${i.label}</strong></td><td>${i.now}</td><td style="color:var(--text-muted)">${i.why}</td></tr>`
+    ).join('') + '</tbody>';
+  }
+}
+
+/* ═══════════ Executive Summary (顶部) ═══════════ */
+function renderExecutiveSummary(O) {
+  const syn = O.synthesis || {};
+  const cycle = O.cycle || {};
+  const tpl = O.template || {};
+  const tm = tpl.top_match || {};
+  const stress = O.stress || {};
+  const narr = O.narrative || {};
+  const sd = O.system_dynamics || {};
+  const pt = sd.phase_transition || {};
+  const div = O.divergence || {};
+  const ts = DATA.time_series || {};
+  const riskScore = syn.risk_score || 50;
+  const riskColor = riskScore < 30 ? '#6bcb77' : riskScore < 45 ? '#ffd93d' : riskScore < 65 ? '#ff6b6b' : '#ff4757';
+
+  // Phase + Risk header
+  const phaseIcon = {normal_growth:'🟢',bubble_forming:'🟡',crisis_unfolding:'🔴',deleveraging:'🟠',order_transition:'💀'};
+  document.getElementById('exec-phase-icon').textContent = phaseIcon[O.detected_phase] || '⚪';
+  document.getElementById('exec-phase-label').textContent = O.phase_label + ' · ' + (O.phase_description||'');
+  document.getElementById('exec-risk').textContent = riskScore;
+  document.getElementById('exec-risk').style.color = riskColor;
+  const riskLabel = riskScore<25?'低风险':riskScore<40?'中低风险':riskScore<60?'中高风险':riskScore<80?'高风险':'极高风险';
+  document.getElementById('exec-risk-label').textContent = riskLabel + ' · ' + (syn.risk_reward||'');
+
+  // Narrative paragraph
+  const short = cycle.short_term || {};
+  const long = cycle.long_term || {};
+  const empire = cycle.empire || {};
+  const curve = (ts.us_yield_curve||[[0,0]]).slice(-1)[0]?.[1] || 0.87;
+  const gold = (ts.gold||[[0,0]]).slice(-1)[0]?.[1] || 4700;
+  const reserve = (ts.usd_reserve_share||[[0,0]]).slice(-1)[0]?.[1] || 57;
+  const vix = (ts.us_vixy||[[0,0]]).slice(-1)[0]?.[1] || 28;
+  const contradicts = syn.cross_validations || [];
+  const nContra = contradicts.filter(c=>c.includes('⚠️')).length;
+  const nConverge = contradicts.filter(c=>c.includes('一致')).length;
+
+  const narrative = [
+    `当前处于<strong>${O.phase_label}</strong>（${O.phase_description||''}），综合风险<strong style="color:${riskColor}">${riskScore}/100</strong>。`,
+    `短期周期<strong>${short.stage||'?'}</strong>，长期周期<strong>${long.stage||'?'}</strong>，帝国周期<strong>${empire.stage||'?'}</strong>——`,
+    `三条曲线${long.stage&&long.stage.includes('去杠杆')?'正在收敛于去杠杆前夜':'方向分化'}。`,
+    `最佳历史类比：<strong>${tm.name||'?'}</strong>（相似度${((tm.similarity||0)*100).toFixed(0)}%），${tpl.diff||''}。`,
+    nContra > 0 ? `交叉验证发现<strong>${nContra}条矛盾</strong>——模型可能${nContra>=3?'系统性低估':'局部低估'}尾部风险。` : '',
+    nConverge > 0 ? `<strong>${nConverge}个视角一致</strong>指向同类风险，提高确信度。` : '',
+    `黄金$${Math.round(gold)}（年涨46%）、VIX ${vix}、储备份额${Math.round(reserve)}%——市场在用脚投票。`
+  ].filter(Boolean).join('');
+
+  document.getElementById('exec-narrative').innerHTML = narrative;
+
+  // Core trends (from template path + cycle + stress)
+  const trends = [];
+  if (curve<0.88) trends.push({d:'⬇️',t:'收益率曲线深度倒挂',p:`${(curve*100).toFixed(1)}% → 衰退概率>80%`});
+  if (gold>4500) trends.push({d:'⬆️',t:'黄金持续走强',p:`$${Math.round(gold)} 去美元化叙事自我强化`});
+  if ((narr.bull_ratio||0)>0.7) trends.push({d:'⚠️',t:'市场共识极端看多',p:'牛熊比' + ((narr.bull_ratio||0)*100).toFixed(0) + '% → 反转前夜'});
+  if (reserve<60) trends.push({d:'⬇️',t:'美元储备份额持续下降',p:reserve.toFixed(0)+'% 去美元化进行中'});
+  if (pt.as_ratio>1) trends.push({d:'🟡',t:'系统稳定器承压',p:`A/S比${(pt.as_ratio||0).toFixed(1)} 破坏性互作用${pt.destructive_interactions||0}个`});
+  document.getElementById('exec-trends').innerHTML = trends.slice(0,4).map(t=>
+    `<div class="item"><span class="dir">${t.d}</span>${t.t}<div class="pct">${t.p}</div></div>`
+  ).join('');
+
+  // Main risks (from stress + divergence)
+  const risks = [];
+  (stress.top_risks||[]).slice(0,3).forEach(r=>{
+    risks.push({d:r.probability>0.4?'🔴':r.probability>0.2?'🟡':'🟢',t:r.label||'',p:(r.probability*100).toFixed(0)+'%'});
+  });
+  (div.divergences||[]).forEach(d=>{
+    risks.push({d:d.severity==='critical'?'🚨':'⚠️',t:d.type||'',p:''});
+  });
+  document.getElementById('exec-risks').innerHTML = risks.slice(0,5).map(r=>
+    `<div class="item"><span class="dir">${r.d}</span>${r.t}<span class="pct">${r.p}</span></div>`
+  ).join('');
+
+  // Action recommendations
+  const alloc = syn.allocation || {};
+  const actions = [];
+  if (riskScore<30) {
+    actions.push({a:'📊',t:'维持标准配置',d:'风险可控，正常参与市场'});
+    actions.push({a:'🛡️',t:'保留黄金对冲',d:`${((alloc.gold||{}).weight*100||7).toFixed(0)}%黄金 对冲尾部风险`});
+  } else if (riskScore<50) {
+    actions.push({a:'📉',t:'适度降低风险敞口',d:'权益不超过50%，增持短债'});
+    actions.push({a:'🛡️',t:'增持对冲资产',d:'黄金+TIPS，防御性配置'});
+  } else if (riskScore<70) {
+    actions.push({a:'🔻',t:'大幅降低权益',d:'权益≤35%，债+金为主'});
+    actions.push({a:'💵',t:'提高现金比例',d:'保持流动性应对极端场景'});
+  } else {
+    actions.push({a:'🚨',t:'防御模式',d:'现金为王，权益≤10%'});
+    actions.push({a:'🥇',t:'重仓黄金',d:'20%+黄金对冲系统性风险'});
+  }
+  actions.push({a:'👀',t:'关注触发信号',d:'曲线倒挂突破24月/金价$5000/VIX>35'});
+  document.getElementById('exec-actions').innerHTML = actions.map(a=>
+    `<div class="item"><span class="dir">${a.a}</span>${a.t}<div style="color:var(--text-muted);font-size:0.75rem">${a.d}</div></div>`
+  ).join('');
+
+  // Mini allocation bar
+  const aIcons = {equity:'📈',gold:'🥇',bonds:'📜',cash:'💵'};
+  const aColors = {equity:'alloc-equity',gold:'alloc-gold',bonds:'alloc-bonds',cash:'alloc-cash'};
+  let html = '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">💰 推荐仓位配置</div>';
+  html += '<div class="allocation-bar">';
+  for (const [k,v] of Object.entries(alloc)) {
+    html += `<div class="seg ${aColors[k]||''}" style="width:${v.weight*100}%">${(v.weight*100).toFixed(0)}%</div>`;
+  }
+  html += '</div>';
+  html += '<div style="display:flex;gap:16px;margin-top:6px;font-size:0.78rem">';
+  for (const [k,v] of Object.entries(alloc)) {
+    html += `<span>${aIcons[k]||''} ${k.toUpperCase()} ${(v.weight*100).toFixed(0)}%</span>`;
+  }
+  html += '</div>';
+  document.getElementById('exec-allocation').innerHTML = html;
+}
+
+/* ═══════════ Deep Diagnosis ═══════════ */
+function renderDiagnosis(O) {
+  const cycle = O.cycle || {};
+  const tpl = O.template || {};
+  const tm = tpl.top_match || {};
+  const narr = O.narrative || {};
+  const sd = O.system_dynamics || {};
+  const pt = sd.phase_transition || {};
+  const syn = O.synthesis || {};
+  const stress = O.stress || {};
+  const ts = DATA.time_series || {};
+
+  // Phase description
+  document.getElementById('diagnosis-phase-desc').textContent =
+    (O.detected_phase||'?') + ' · ' + (O.phase_label||'') + ' · 风险 ' + (syn.risk_score||'?').toFixed(0) + '/100';
+
+  // Core contradiction
+  const contradicts = syn.cross_validations || [];
+  document.getElementById('core-contradiction').innerHTML =
+    '<strong>⚡ 核心矛盾</strong>: ' + (contradicts[0]||'待引擎运行后生成') +
+    (contradicts.length>1 ? '<br>' + contradicts.slice(1).join('<br>') : '');
+
+  // Divergence alerts
+  const div = O.divergence || {};
+  const divergences = div.divergences || [];
+  if (divergences.length > 0) {
+    document.getElementById('divergence-alerts').innerHTML =
+      '<div class="chart-card" style="border-left:3px solid var(--accent-coral)">' +
+      '<h3>⚡ 指标背离检测 <span style="color:var(--text-muted);font-size:0.75rem">' + (div.summary||'') + '</span></h3>' +
+      divergences.map(d => {
+        const sevColor = d.severity==='critical'?'var(--danger)':d.severity==='warning'?'var(--warning)':'var(--success)';
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">' +
+          '<span style="color:'+sevColor+'">'+d.type+'</span>' +
+          '<div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px">'+d.detail+'</div></div>';
+      }).join('') + '</div>';
+  } else {
+    document.getElementById('divergence-alerts').innerHTML = '';
+  }
+
+  // Status overview table
+  const short = cycle.short_term || {};
+  const long = cycle.long_term || {};
+  const empire = cycle.empire || {};
+
+  const statusIcon = (score, isConfidence) => {
+    if (isConfidence) return score>0.5?'高':score>0.3?'中':'低';
+    return score>0.1?'🟢':score>-0.1?'🟡':score>-0.3?'🔴':'💀';
+  };
+  const shortSig = Object.entries(short.signals||{}).slice(0,3).map(([k,v])=>k+':'+v).join(' · ');
+
+  const rows = [
+    {
+      dim:'短期周期', stage:short.stage||'?', icon:statusIcon(short.score||0),
+      signals:shortSig, conf:(short.confidence*100||0).toFixed(0)+'%',
+    },
+    {
+      dim:'长期周期', stage:long.stage||'?', icon:statusIcon(long.score||0),
+      signals:Object.entries(long.signals||{}).slice(0,3).map(([k,v])=>k+':'+v).join(' · '),
+      conf:(long.confidence*100||0).toFixed(0)+'%',
+    },
+    {
+      dim:'帝国周期', stage:empire.stage||'?', icon:statusIcon(empire.score||0),
+      signals:Object.entries(empire.signals||{}).slice(0,3).map(([k,v])=>k+':'+v).join(' · '),
+      conf:(empire.confidence*100||0).toFixed(0)+'%',
+    },
+    {
+      dim:'历史类比', stage:tm.name||'?', icon:((tm.similarity||0)*100)>35?'🟡':'🟢',
+      signals:`相似度 ${((tm.similarity||0)*100).toFixed(0)}% · ${tpl.diff||''}`,
+      conf:'',
+    },
+    {
+      dim:'叙事共识', stage:narr.bull_ratio>0.8?'🚨极度看多':narr.bull_ratio>0.6?'⚠️偏多':'🟡均衡',
+      icon:narr.tipping_risk==='critical'?'🔴':narr.tipping_risk==='elevated'?'🟡':'🟢',
+      signals:`牛熊比 ${((narr.bull_ratio||0)*100).toFixed(0)}% · 背离${narr.divergence_score||0}分`,
+      conf:(narr.bull_ratio>0.8?'反转风险最高级':'')
+    },
+    {
+      dim:'系统稳定', stage:`A/S=${(pt.as_ratio||0).toFixed(1)}`,
+      icon:pt.phase==='warning'?'🟡':pt.phase==='alarm'?'🔴':'🟢',
+      signals:`崩溃概率 ${((pt.systemic_collapse_probability||0)*100).toFixed(1)}% · ${pt.healthy_stabilizers||0}稳定器`,
+      conf:`${sd.criticality||''}`
+    },
+  ];
+  document.querySelector('#status-overview tbody').innerHTML = rows.map(r =>
+    `<tr>
+      <td><strong>${r.dim}</strong></td>
+      <td>${r.stage||'?'}</td>
+      <td style="font-size:1.3rem">${r.icon}</td>
+      <td style="font-size:0.78rem;color:var(--text-muted)">${r.signals}</td>
+      <td style="font-size:0.78rem">${r.conf||''}</td>
+    </tr>`
+  ).join('');
+
+  // KPI row
+  const last = (key) => (ts[key]||[[0,0]]).slice(-1)[0]?.[1]?.toFixed(2) || '?';
+  const gold = (ts.gold||[[0,0]]).slice(-1)[0]?.[1] || '?';
+  const vix = (ts.us_vixy||[[0,0]]).slice(-1)[0]?.[1] || '?';
+  const sp = (ts.us_sp500||[[0,0]]).slice(-1)[0]?.[1] || '?';
+  const debt = (ts.us_debt_gdp||ts.china_debt_gdp||[[0,0]]).slice(-1)[0]?.[1] || '?';
+  const reserve = (ts.usd_reserve_share||[[0,0]]).slice(-1)[0]?.[1] || '?';
+
+  document.getElementById('diagnosis-kpis').innerHTML = [
+    {label:'🇺🇸 S&P 500',val:sp,sub:''},
+    {label:'🥇 黄金',val:'$'+Math.round(gold),sub:'年涨+46%'},
+    {label:'😱 VIX',val:vix,sub:''},
+    {label:'💸 债务/GDP',val:Math.round(debt)+'%',sub:''},
+    {label:'🌐 储备份额',val:Math.round(reserve)+'%',sub:''},
+    {label:'📈 压力告警',val:stress.n_alerts||0,sub:stress.n_scenarios+'场景'},
+  ].map(m => `<div class="metric-card"><div class="label">${m.label}</div><div class="value">${m.val}</div><div class="sub">${m.sub}</div></div>`).join('');
+}
+
+/* ═══════════ Summary ═══════════ */
+function renderSummary(O) {
+  const tpl = O.template || {};
+  const tm = tpl.top_match || {};
+  const diff = tpl.diff || '';
+  const causal = O.causal || {};
+  
+  const text = `表面 AI 盛世，底下 ${causal.n_triggers||'?'} 链并发。` +
+    `${tm.name||'2013 Taper Tantrum'} 是最像的历史剧本——先崩后救。` +
+    `但这次债务更高、极化更深、合作更弱——「${diff||'比历史更危险'}」。`;
+  
+  document.getElementById('summary-text').textContent = text;
+}
+
+/* ═══════════ Scenario Player ═══════════ */
+const SCENARIO_DEFAULTS = {
+  curve: {label:'利率曲线 (2Y/10Y)', val:1.05, min:0.5, max:1.5, step:0.01, unit:'x', impact:10},
+  vix:   {label:'VIX 恐慌指数', val:21, min:10, max:60, step:1, unit:'', impact:8},
+  reserve:{label:'美元储备份额%', val:58, min:40, max:70, step:1, unit:'%', impact:8},
+  gold:  {label:'黄金涨幅 YoY%', val:46, min:-20, max:80, step:1, unit:'%', impact:6},
+  debt:  {label:'美国债务/GDP%', val:123, min:60, max:200, step:1, unit:'%', impact:5},
+};
+let scenarioValues = {};
+
+function initScenario() {
+  const grid = document.getElementById('scenario-sliders');
+  for (const [key, cfg] of Object.entries(SCENARIO_DEFAULTS)) {
+    scenarioValues[key] = cfg.val;
+    grid.innerHTML += `
+      <div class="scenario-item">
+        <label>${cfg.label} <span class="val" id="sv-${key}">${cfg.val}${cfg.unit}</span></label>
+        <input type="range" min="${cfg.min}" max="${cfg.max}" step="${cfg.step}" value="${cfg.val}"
+          oninput="updateScenario('${key}', this.value)">
+      </div>`;
+  }
+  updateScenarioDisplay();
+}
+
+function updateScenario(key, rawVal) {
+  const cfg = SCENARIO_DEFAULTS[key];
+  const val = parseFloat(rawVal);
+  scenarioValues[key] = val;
+  document.getElementById('sv-' + key).textContent = val + cfg.unit;
+  updateScenarioDisplay();
+}
+
+function updateScenarioDisplay() {
+  // Simple additive model: baseline 45 + Σ(impact × ((current - baseline) / range))
+  const O = DATA?.orchestrator;
+  const baseline = (O?.synthesis?.risk_score) || 45;
+  let delta = 0;
+  for (const [key, cfg] of Object.entries(SCENARIO_DEFAULTS)) {
+    const normalizedDiff = (scenarioValues[key] - cfg.val) / ((cfg.max - cfg.min) * 0.5);
+    delta += Math.round(cfg.impact * normalizedDiff);
+  }
+
+  const newRisk = Math.max(0, Math.min(100, baseline + delta));
+  const riskEl = document.getElementById('scenario-risk');
+  const deltaEl = document.getElementById('scenario-delta');
+  const actionsEl = document.getElementById('scenario-actions');
+
+  const color = newRisk < 30 ? '#5ce68c' : newRisk < 45 ? '#ffd63d' : newRisk < 65 ? '#ff9b6e' : '#ff525f';
+  riskEl.textContent = newRisk;
+  riskEl.style.color = color;
+  deltaEl.innerHTML = delta >= 0
+    ? `<span style="color:#ff525f">▲ +${delta}</span> vs 基线 ${baseline}`
+    : `<span style="color:#5ce68c">▼ ${delta}</span> vs 基线 ${baseline}`;
+
+  // Action recommendations
+  if (newRisk < 30) actionsEl.textContent = '🟢 低风险 — 可增持权益至 60%';
+  else if (newRisk < 45) actionsEl.textContent = '🟡 中等 — 维持 35% 权益配置';
+  else if (newRisk < 65) actionsEl.textContent = '🟠 偏高 — 建议权益降至 20%，增持债券+黄金';
+  else if (newRisk < 80) actionsEl.textContent = '🔴 高风险 — 权益 10%，黄金 20%，债券 65%';
+  else actionsEl.textContent = '💀 极端 — 全面防御，现金+黄金为主';
+}
+
+function resetScenario() {
+  for (const [key, cfg] of Object.entries(SCENARIO_DEFAULTS)) {
+    scenarioValues[key] = cfg.val;
+    document.getElementById('sv-' + key).textContent = cfg.val + cfg.unit;
+    const slider = document.querySelector(`#scenario-sliders input[oninput*="${key}"]`);
+    if (slider) slider.value = cfg.val;
+  }
+  updateScenarioDisplay();
+}
+
+// Call initScenario after data loads, inside renderAll
 /* ═══════════ Init ═══════════ */
 loadData();
 </script>

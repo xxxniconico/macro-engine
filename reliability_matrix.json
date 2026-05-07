@@ -1,0 +1,79 @@
+{
+  "calibrated_at": "2026-05-07",
+  "n_templates": 25,
+  "reliability": {
+    "cycle": {
+      "normal_growth": 0.375,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.05,
+      "deleveraging": 0.125,
+      "order_transition": 0.333
+    },
+    "causal": {
+      "normal_growth": 0.375,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.4,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    },
+    "game_theory": {
+      "normal_growth": 0.25,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.25,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    },
+    "stress": {
+      "normal_growth": 0.375,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.15,
+      "deleveraging": 0.125,
+      "order_transition": 0.333
+    },
+    "narrative": {
+      "normal_growth": 0.5,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.1,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    },
+    "system": {
+      "normal_growth": 0.5,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.05,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    },
+    "first_principles": {
+      "normal_growth": 0.5,
+      "bubble_forming": 0.375,
+      "crisis_unfolding": 0.05,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    },
+    "template": {
+      "normal_growth": 0.5,
+      "bubble_forming": 0.125,
+      "crisis_unfolding": 0.05,
+      "deleveraging": 0.125,
+      "order_transition": 0.167
+    }
+  },
+  "per_module_accuracy": {
+    "cycle": 0.12,
+    "causal": 0.36,
+    "game_theory": 0.2,
+    "stress": 0.2,
+    "narrative": 0.16,
+    "system": 0.12,
+    "first_principles": 0.2,
+    "template": 0.12
+  },
+  "phase_coverage": {
+    "normal_growth": 3,
+    "bubble_forming": 3,
+    "crisis_unfolding": 15,
+    "deleveraging": 3,
+    "order_transition": 1
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "status": "executed",
+  "executed_at": "2026-05-07",
+  "summary": "P1 校准完成 — 6项参数已调整，5大风险驱动力已识别",
+  "sensitivity": {
+    "baseline_risk": 45,
+    "top_drivers": [
+      {"indicator": "us_yield_curve", "delta": 10, "role": "方向盘"},
+      {"indicator": "us_vixy", "delta": 8, "role": "恐慌指数"},
+      {"indicator": "usd_reserve_share", "delta": 8, "role": "帝国周期"},
+      {"indicator": "gold", "delta": 6, "role": "去杠杆信号"},
+      {"indicator": "us_debt_gdp", "delta": 5, "role": "债务底盘"}
+    ],
+    "conclusion": "利率曲线+VIX 是方向盘，储备份额+黄金是油门，债务是底盘。监控这5指标把握80%风险动态。"
+  },
+  "calibration_applied": [
+    {"param": "VIX 健康阈值", "old": 25, "new": 20, "file": "system_dynamics_v2.py"},
+    {"param": "黄金年涨幅阈值", "old": 40, "new": 25, "file": "system_dynamics_v2.py"},
+    {"param": "中国债务警戒线", "old": 300, "new": 250, "file": "system_dynamics_v2.py"},
+    {"param": "储备份额阈值", "old": 55, "new": 58, "file": "system_dynamics_v2.py"},
+    {"param": "曲线倒挂预警", "old": "0.88x", "new": "0.95x", "file": "game_theory_v2.py"},
+    {"param": "Fed曲线压力陡峭度", "old": 4.0, "new": 3.0, "file": "game_theory_v2.py"}
+  ],
+  "backlog": [
+    "完整 orchestrator 回测 (p1_backtest_v2.py 需修复 SQLite 临时库切换)",
+    "stress_test 场景阈值用历史数据校准",
+    "动态权重用回测表现反推优化"
+  ]
+}

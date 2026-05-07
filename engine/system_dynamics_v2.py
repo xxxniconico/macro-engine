@@ -11,6 +11,7 @@ Dalio 最警惕的时刻：
 
 import sys
 import json
+import math
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional
@@ -23,7 +24,40 @@ from engine.system_dynamics import LOOPS
 
 
 # ═══════════════════════════════════════════════════════
-#  稳定器健康度量化
+#  Sigmoid 辅助 (与博弈模块共享逻辑)
+# ═══════════════════════════════════════════════════════
+
+def _sigmoid(value: float, threshold: float, steepness: float = 1.0,
+             direction: str = "below") -> float:
+    """Sigmoid 平滑映射: 指标值→0-1得分。"""
+    diff = value - threshold
+    if direction == "below":
+        x = -diff * steepness
+    elif direction == "above":
+        x = diff * steepness
+    elif direction == "midpoint":
+        x = -abs(diff) * steepness
+    else:
+        x = diff * steepness
+    return 1.0 / (1.0 + math.exp(-x))
+
+def _get_historical(indicator: str, days: int = 30) -> list:
+    """获取指标的近期历史值。"""
+    import sqlite3
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        rows = conn.execute(
+            "SELECT date, value FROM macro_indicators WHERE indicator_name=? ORDER BY date DESC LIMIT ?",
+            (indicator, days)
+        ).fetchall()
+        conn.close()
+        return [(r[0], r[1]) for r in rows]
+    except:
+        return []
+
+
+# ═══════════════════════════════════════════════════════
+#  稳定器健康度 V2 — Sigmoid + 动量
 # ═══════════════════════════════════════════════════════
 
 def quantify_stabilizer_health(loop_id: str, loop: dict, indicators: dict) -> dict:
@@ -47,47 +81,61 @@ def quantify_stabilizer_health(loop_id: str, loop: dict, indicators: dict) -> di
         fed_rate = indicators.get("us_fed_rate", 4)
         cpi = indicators.get("us_cpi", 3)
         unemployment = indicators.get("us_unemployment", 5)
-        
-        # 降息空间 = 实际利率 - 中性利率(2%) 的余量
-        real_rate = fed_rate - (cpi if cpi > 0 else 2)
-        space = fed_rate  # 名义降息空间
-        
-        if space > 4:
-            score = 90  # 充足
-        elif space > 2:
-            score = 70  # 足够
-        elif space > 1:
-            score = 45  # 有限
-            failures.append(f"Fed 降息空间仅{space:.1f}%")
-        else:
-            score = 20  # 几乎用完
-            failures.append(f"Fed 降息空间耗尽({space:.1f}%)")
-        
+
+        # 降息空间 sigmoid: 名义利率越高→空间越大
+        rate_space = _sigmoid(fed_rate, 2.0, steepness=0.8, direction="above")
+        # CPI 约束: CPI越低→越能降息
+        cpi_freedom = _sigmoid(cpi, 3.5, steepness=1.5, direction="below")
+        # 失业约束: 失业越高→越需要降息但空间变小
+        unemp_pressure = _sigmoid(unemployment, 4.0, steepness=1.0, direction="above")
+
+        # 综合得分 = 空间 × 自由度的加权
+        score = round((rate_space * 0.5 + cpi_freedom * 0.35 + unemp_pressure * 0.15) * 100)
+
         if cpi > 4:
-            score = max(score - 20, 5)
             failures.append(f"通胀{cpi:.1f}%限制Fed行动")
         if unemployment < 3.5:
-            score = max(score - 10, 5)
             failures.append("就业过热限制降息")
-        
+        if fed_rate < 2.5:
+            failures.append(f"降息空间有限({fed_rate:.1f}%)")
+
+        # 动量检测 — 这个稳定器在变强还是变弱？
+        history = _get_historical("us_fed_rate", 30)
+        momentum = 0
+        if len(history) >= 5:
+            recent = sum(r[1] for r in history[:3]) / 3
+            older = sum(r[1] for r in history[-3:]) / 3
+            if older > 0:
+                momentum = round((recent - older) / older, 3)
+        space = fed_rate
         level = "healthy" if score > 65 else ("available" if score > 35 else "fragile")
     
     elif loop_id == "supply_demand_rebalance":
         # 供需调节 — 价格机制是否仍然有效
         vix = indicators.get("us_vixy", 20)
-        gold_yr = _gold_yoy(indicators)
-        
-        score = 75  # 基础良好
+        gold_now = indicators.get("gold", 4000)
+        gold_ref = indicators.get("gold_1y_reference", gold_now * 0.7)
+
+        # VIX 越低越好 (价格发现有效)
+        vix_score = _sigmoid(vix, 20, steepness=0.3, direction="below")
+        # 金价年涨幅越低越好 (没有被投机主导)
+        gold_yr = (gold_now - gold_ref) / gold_ref * 100 if gold_ref > 0 else 0
+        gold_score = _sigmoid(gold_yr, 25, steepness=0.08, direction="below")
+
+        score = round((vix_score * 0.5 + gold_score * 0.5) * 100)
         if vix > 30:
-            score -= 20
             failures.append(f"VIX={vix}恐慌破坏价格发现")
         if gold_yr > 50:
-            score -= 15
             failures.append(f"黄金年涨{gold_yr:.0f}%→投机压倒供需")
-        if abs(gold_yr) > 100:
-            score = 20
-            failures.append("价格机制基本失效")
-        
+
+        history = _get_historical("us_vixy", 30)
+        momentum = 0
+        if len(history) >= 5:
+            recent = sum(r[1] for r in history[:3]) / 3
+            older = sum(r[1] for r in history[-3:]) / 3
+            if older > 0:
+                momentum = round((older - recent) / older, 3)  # VIX降=改善
+        space = gold_ref
         level = "healthy" if score > 65 else ("available" if score > 35 else "fragile")
     
     elif loop_id == "china_policy_response":
@@ -95,35 +143,28 @@ def quantify_stabilizer_health(loop_id: str, loop: dict, indicators: dict) -> di
         debt = indicators.get("china_debt_gdp", 280)
         pmi = indicators.get("china_pmi", 50)
         cpi = indicators.get("china_cpi", 1)
-        
-        # 财政空间
-        if debt < 250:
-            fiscal_score = 90
-        elif debt < 300:
-            fiscal_score = 60
-        elif debt < 350:
-            fiscal_score = 35
+
+        # 财政空间: 债务越低越好
+        fiscal_score = _sigmoid(debt, 250, steepness=0.05, direction="below")
+        # 货币空间: CPI越低越能宽松
+        monetary_score = _sigmoid(cpi, 2.5, steepness=1.5, direction="below")
+
+        score = round((fiscal_score * 0.5 + monetary_score * 0.5) * 100)
+        if debt > 300:
             failures.append(f"地方债务{debt}%限制财政扩张")
-        else:
-            fiscal_score = 15
-            failures.append(f"债务{debt}%→财政空间耗尽")
-        
-        # 货币空间（通缩比通胀更灵活）
-        if cpi < 0:
-            monetary_score = 80  # 通缩时降息空间大
-        elif cpi < 2:
-            monetary_score = 70
-        elif cpi < 4:
-            monetary_score = 45
-        else:
-            monetary_score = 20
+        if cpi > 3:
             failures.append(f"CPI={cpi}%限制货币宽松")
-        
-        # 政策工具可用性
         if pmi < 48:
             failures.append(f"PMI={pmi}→需要政策但空间缩小")
-        
-        score = (fiscal_score * 0.5 + monetary_score * 0.5)
+
+        history = _get_historical("china_debt_gdp", 30)
+        momentum = 0
+        if len(history) >= 3:
+            recent = sum(r[1] for r in history[:2]) / max(len(history[:2]), 1)
+            older = sum(r[1] for r in history[-2:]) / max(len(history[-2:]), 1)
+            if older > 0:
+                momentum = round((older - recent) / older, 3)
+        space = debt
         level = "healthy" if score > 65 else ("available" if score > 35 else "fragile")
     
     elif loop_id == "global_cooperation":
@@ -132,22 +173,33 @@ def quantify_stabilizer_health(loop_id: str, loop: dict, indicators: dict) -> di
         reserve = indicators.get("usd_reserve_share", 58)
         gold = indicators.get("gold", 4000)
         vix = indicators.get("us_vixy", 20)
-        
-        score = 50  # 基础分
+
+        # 极化越低越好
+        pol_score = _sigmoid(polarization, 75, steepness=0.1, direction="below")
+        # 储备份额越高越好 (美国领导力)
+        reserve_score = _sigmoid(reserve, 58, steepness=0.15, direction="above")
+        # VIX 越低越好
+        vix_score = _sigmoid(vix, 28, steepness=0.2, direction="below")
+
+        score = round((pol_score * 0.4 + reserve_score * 0.35 + vix_score * 0.25) * 100)
         if polarization > 80:
-            score -= 20
             failures.append(f"极化{polarization}→国际合作瘫痪")
         if reserve < 55:
-            score -= 15
             failures.append(f"储备份额{reserve}%→美国领导力下降")
         if gold > 5000:
-            score -= 10
             failures.append(f"金价{int(gold)}→信任危机")
         if vix > 30:
-            score -= 10
             failures.append(f"VIX={vix}→危机模式削弱合作")
-        
         score = max(score, 5)
+
+        history = _get_historical("us_political_polarization", 30)
+        momentum = 0
+        if len(history) >= 3:
+            recent = sum(r[1] for r in history[:2]) / max(len(history[:2]), 1)
+            older = sum(r[1] for r in history[-2:]) / max(len(history[-2:]), 1)
+            if older > 0:
+                momentum = round((older - recent) / older, 3)
+        space = reserve
         level = "healthy" if score > 65 else ("available" if score > 35 else "fragile")
     
     else:
@@ -158,7 +210,9 @@ def quantify_stabilizer_health(loop_id: str, loop: dict, indicators: dict) -> di
         "health_score": round(score, 1),
         "health_level": level,
         "failure_signals": failures,
-        "is_degrading": score < 35,
+        "is_degrading": score < 35 or (momentum < -0.05 if 'momentum' in dir() else False),
+        "momentum": round(momentum, 3) if 'momentum' in dir() else 0,
+        "momentum_label": "🔻加速恶化" if ('momentum' in dir() and momentum < -0.1) else ("🟡缓慢退化" if ('momentum' in dir() and momentum < -0.03) else ("➡️稳定" if ('momentum' in dir() and abs(momentum) < 0.03) else "🔺改善中")),
     }
 
 

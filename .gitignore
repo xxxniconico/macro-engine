@@ -7,4 +7,4 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-dashboard/data.json
+# dashboard/data.json — tracked for GitHub Pages static hosting

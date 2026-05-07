@@ -9,6 +9,39 @@ Dalio 的核心问题：
 不是问"我认为会发生什么"，而是问"各方在各自约束下会怎么做？各方行为的加总效应是什么？"
 """
 
+# ═══════════════════════════════════════════════════════
+#  Sigmoid 可行性函数 — 替代硬编码 if/else
+# ═══════════════════════════════════════════════════════
+
+import math
+
+def sigmoid_feasibility(value: float, threshold: float, steepness: float = 1.0,
+                        direction: str = "below") -> float:
+    """Sigmoid 平滑可行性: 将"指标值 vs 阈值"映射为连续的 0-1 可行性。
+
+    Args:
+        value: 当前指标值
+        threshold: 临界阈值
+        steepness: 陡峭度 (越高过渡越锐利，默认1.0)
+        direction:
+          "below" → 值越低可行性越高 (如 CPI低→降息可行)
+          "above" → 值越高可行性越高 (如 PMI高→收紧可行)
+          "midpoint" → 越接近阈值越可行 (如 debt=300% 刚好可接受)
+
+    Returns:
+        0.0 ~ 1.0 的可行性得分
+    """
+    diff = value - threshold
+    if direction == "below":
+        x = -diff * steepness
+    elif direction == "above":
+        x = diff * steepness
+    elif direction == "midpoint":
+        x = -abs(diff) * steepness
+    else:
+        x = diff * steepness
+    return 1.0 / (1.0 + math.exp(-x))
+
 import sys
 import json
 from datetime import date, timedelta
@@ -44,32 +77,33 @@ def get_strategy_space(indicators: dict) -> dict:
         {
             "action": "hold",
             "label": "维持利率不变",
-            "feasibility": 0.9,
-            "rationale": "通胀仍在3%+、就业健康、不急于行动",
+            "feasibility": round(1.0 - sigmoid_feasibility(cpi, 3.2, steepness=2.0, direction="below") * 0.6, 2),
+            "rationale": f"CPI={cpi}%+就业{unemp}%→不急于行动",
         },
         {
             "action": "cut_25bp",
             "label": "降息25bp",
-            "feasibility": 0.5 if cpi > 3 else 0.7,
+            "feasibility": round(sigmoid_feasibility(cpi, 3.5, steepness=1.5, direction="below") * 0.8, 2),
             "rationale": "曲线倒挂→需要正常化，但通胀仍是障碍",
         },
         {
             "action": "cut_50bp",
             "label": "紧急降息50bp",
-            "feasibility": 0.1,
-            "rationale": "只有市场崩盘或失业飙升才会触发",
+            "feasibility": round(sigmoid_feasibility(curve, 0.85, steepness=3.0, direction="below") * 0.3, 2),
+            "rationale": "只有深度倒挂或市场崩盘才会触发",
         },
         {
             "action": "hike",
             "label": "加息",
-            "feasibility": 0.05,
+            "feasibility": round(sigmoid_feasibility(cpi, 4.5, steepness=3.0, direction="above") * 0.2, 2),
             "rationale": "除非通胀二次飙升（极端场景）",
         },
     ]
-    
-    # 曲线倒挂加剧 → 降息压力增大
-    if curve < 0.85:
-        fed_strategies[1]["feasibility"] = min(0.8, fed_strategies[1]["feasibility"] + 0.2)
+
+    # 曲线倒挂加剧 → 降息压力连续增大
+    curve_pressure = sigmoid_feasibility(curve, 0.95, steepness=3.0, direction="below")
+    fed_strategies[1]["feasibility"] = round(min(0.85, fed_strategies[1]["feasibility"] + curve_pressure * 0.3), 2)
+    if curve_pressure > 0.5:
         fed_strategies[1]["rationale"] += " | 曲线深度倒挂促Fed行动"
     
     spaces["fed"] = fed_strategies
@@ -83,19 +117,19 @@ def get_strategy_space(indicators: dict) -> dict:
         {
             "action": "fiscal_stimulus",
             "label": "加大财政刺激（专项债+特别国债）",
-            "feasibility": 0.7 if debt < 310 else 0.4,
+            "feasibility": round(sigmoid_feasibility(debt, 310, steepness=0.5, direction="below") * 0.8, 2),
             "rationale": f"PMI={pmi}→需要托底，但债务{debt}%是硬约束",
         },
         {
             "action": "monetary_ease",
             "label": "降准降息",
-            "feasibility": 0.8 if cn_cpi < 2 else 0.5,
+            "feasibility": round(sigmoid_feasibility(cn_cpi, 2.5, steepness=1.5, direction="below") * 0.9, 2),
             "rationale": f"CPI={cn_cpi}%给了宽松空间",
         },
         {
             "action": "housing_rescue",
             "label": "房地产更大力度救助",
-            "feasibility": 0.6,
+            "feasibility": round(sigmoid_feasibility(pmi, 51, steepness=2.0, direction="below") * 0.7, 2),
             "rationale": "房市是经济稳定器，救市有道德风险但不得不做",
         },
         {

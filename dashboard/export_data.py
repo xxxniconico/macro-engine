@@ -38,10 +38,16 @@ def export_time_series() -> dict:
             'us_sp500', 'us_cpi', 'us_gdp_growth', 'us_unemployment',
             'us_vixy', 'us_yield_curve', 'us_fed_rate', 'us_debt_gdp',
             'us_gini', 'usd_reserve_share', 'us_political_polarization',
-            'us_wealth_gap', 'us_uso', 'us_tlt', 'us_real_rate',
+            'us_wealth_gap', 'us_uso', 'us_tlt', 'us_spy', 'us_gld', 'us_shy',
+            'us_real_rate',
             'gold', 'credit_spread', 'em_eem', 'us_pmi',
             'china_real_rate', 'china_military', 'china_education',
-            'china_wealth_gap'
+            'china_wealth_gap',
+            'geopolitical_risk', 'us_epu', 'china_epu', 'global_shadow_banking',
+            'us_rgdp_growth_lt', 'us_inflation_lt', 'us_stir_lt', 'us_ltrate_lt',
+            'us_real_rate_lt', 'us_debtgdp_lt', 'us_eq_return_lt', 'us_housing_return_lt',
+            'us_investment_gdp_lt', 'us_current_account_lt', 'us_unemployment_lt',
+            'g7_inflation_lt', 'g7_debtgdp_lt'
         )
         ORDER BY indicator_name, date
     """)
@@ -127,6 +133,7 @@ def main():
         "phase_description": orch["phase_description"],
         "overall_assessment": orch["overall_assessment"],
         "active_weights": orch.get("active_weights", {}),
+        "v2_phase_scores": orch.get("results", {}).get("v2_phase_scores", {}),  # V2 连续阶段得分
         "errors": orch.get("errors", []),
     }
     
@@ -154,15 +161,20 @@ def main():
     cau = r.get("causal", {})
     orch_clean["causal"] = {
         "n_triggers": cau.get("n_triggers", 0),
+        "n_approaching": cau.get("n_approaching", 0),
         "n_future": cau.get("n_future", 0),
-        "events": cau.get("future_events", [])[:6],
+        "active_triggers": cau.get("active_triggers", []),
+        "approaching_triggers": cau.get("approaching_triggers", []),
+        "events": cau.get("future_events", []),
     }
     
     # Step4 博弈
     gt = r.get("game_theory", {})
+    tree = gt.get("game_tree", {})
     orch_clean["game_theory"] = {
-        "trajectory": gt.get("game_tree", {}).get("net_trajectory", ""),
-        "scenarios": gt.get("game_tree", {}).get("terminal_scenarios", []),
+        "trajectory": tree.get("net_trajectory", ""),
+        "scenarios": tree.get("terminal_scenarios", []),
+        "rounds": tree.get("rounds", []),
         "players": gt.get("players", []),
     }
     
@@ -178,9 +190,13 @@ def main():
     syn = r.get("synthesis", {})
     orch_clean["synthesis"] = {
         "risk_score": syn.get("risk_score", 50),
+        "risk_score_bayesian": syn.get("risk_score_bayesian", syn.get("risk_score", 50)),
+        "confidence": syn.get("confidence", "medium"),
+        "entropy": syn.get("entropy", 1.0),
         "risk_reward": syn.get("risk_reward", ""),
         "allocation": syn.get("allocation", {}),
         "cross_validations": syn.get("cross_validations", []),
+        "bayesian": syn.get("bayesian", {}),
     }
     
     # 第一性原理
@@ -196,6 +212,8 @@ def main():
         "criticality": sd.get("criticality", ""),
         "phase_transition": sd.get("phase_transition", {}),
         "stabilizer_details": sd.get("stabilizer_details", {}),
+        "active_interactions": sd.get("active_interactions", []),
+        "all_interactions": sd.get("all_interactions", []),
     }
     
     # 叙事
@@ -205,6 +223,15 @@ def main():
         "sentiment_score": nv.get("media_sentiment", {}).get("sentiment_score", 0),
         "tipping_risk": nv.get("tipping_point", {}).get("tipping_point_risk", "normal"),
         "divergence_score": nv.get("divergence", {}).get("divergence_score", 0),
+    }
+
+    # 背离检测
+    div = r.get("divergence", {})
+    orch_clean["divergence"] = {
+        "summary": div.get("summary", ""),
+        "n_critical": div.get("n_critical", 0),
+        "n_warning": div.get("n_warning", 0),
+        "divergences": div.get("divergences", []),
     }
     
     # 2. 时序

@@ -214,7 +214,7 @@ CAUSAL_GRAPH = {
 
     # ── 政治/社会 ──
     "political_discontent": {
-        "triggers": ["unemployment_rise", "consumer_pain", "wealth_gap_widening"],
+        "triggers": ["unemployment_rise", "consumer_pain", "wealth_gap_alert"],
         "consequences": ["populist_rise", "policy_uncertainty", "social_unrest_risk"],
         "lag_months": {"populist_rise": 12, "policy_uncertainty": 6, "social_unrest_risk": 18},
         "label": "政治不满"
@@ -265,6 +265,12 @@ CAUSAL_GRAPH = {
         "lag_months": {"currency_confidence_erosion": 3, "inflation_fear": 2, "de_dollarization_talk": 4},
         "label": "金价极端信号"
     },
+    "inflation_fear": {
+        "triggers": ["gold_surge_signal"],
+        "consequences": ["safe_haven_rush", "fed_hike_pressure"],
+        "lag_months": {"safe_haven_rush": 2, "fed_hike_pressure": 4},
+        "label": "通胀恐惧升温"
+    },
     "currency_confidence_erosion": {
         "triggers": ["gold_surge_signal"],
         "consequences": ["usd_reserve_decline", "alternative_reserve_search"],
@@ -293,9 +299,33 @@ CAUSAL_GRAPH = {
     },
     "regional_bank_stress": {
         "triggers": ["local_govt_stress"],
-        "consequences": ["credit_tightening"],
-        "lag_months": {"credit_tightening": 3},
+        "consequences": ["credit_tightening", "deposit_flight", "local_credit_crunch"],
+        "lag_months": {"credit_tightening": 3, "deposit_flight": 2, "local_credit_crunch": 1},
         "label": "区域性银行承压"
+    },
+    "bank_npl_concern": {
+        "triggers": ["china_debt_stress"],
+        "consequences": ["credit_tightening", "local_credit_crunch", "bank_loss_provision"],
+        "lag_months": {"credit_tightening": 6, "local_credit_crunch": 3, "bank_loss_provision": 2},
+        "label": "银行坏账忧虑"
+    },
+    "infra_spending_cut": {
+        "triggers": ["local_govt_stress"],
+        "consequences": ["construction_job_loss", "regional_recession_china"],
+        "lag_months": {"construction_job_loss": 3, "regional_recession_china": 9},
+        "label": "基建支出削减"
+    },
+    "local_credit_crunch": {
+        "triggers": ["regional_bank_stress", "bank_npl_concern"],
+        "consequences": ["corporate_default_rise", "consumer_spending_slow"],
+        "lag_months": {"corporate_default_rise": 6, "consumer_spending_slow": 4},
+        "label": "地方信贷紧缩"
+    },
+    "regional_recession_china": {
+        "triggers": ["infra_spending_cut"],
+        "consequences": ["unemployment_rise", "political_discontent", "social_unrest_risk"],
+        "lag_months": {"unemployment_rise": 6, "political_discontent": 12, "social_unrest_risk": 24},
+        "label": "地方经济衰退"
     },
 
     # ── 政治/社会（新增）──
@@ -322,6 +352,218 @@ CAUSAL_GRAPH = {
         "consequences": ["political_discontent", "populist_rise", "tax_reform_pressure"],
         "lag_months": {"political_discontent": 6, "populist_rise": 18, "tax_reform_pressure": 12},
         "label": "贫富差距警报"
+    },
+
+    # ── 终端叶子节点（标签补全）──
+    "safe_haven_rush": {
+        "triggers": ["inflation_fear", "global_contagion"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "避险资产涌入"
+    },
+    "fed_hike_pressure": {
+        "triggers": ["inflation_fear", "inflation_imported"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "Fed加息压力回升"
+    },
+    "usd_reserve_decline": {
+        "triggers": ["currency_confidence_erosion"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "美元储备份额下降"
+    },
+    "alternative_reserve_search": {
+        "triggers": ["currency_confidence_erosion", "de_dollarization_talk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "替代储备货币搜索"
+    },
+    "corporate_hiring_freeze": {
+        "triggers": ["recession_signal"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "企业招聘冻结"
+    },
+    "investment_decline": {
+        "triggers": ["recession_signal"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "投资下降"
+    },
+    "debt_ceiling_crisis": {
+        "triggers": ["policy_gridlock", "fiscal_deadlock_risk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "债务上限危机"
+    },
+    "govt_shutdown_risk": {
+        "triggers": ["policy_gridlock"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "政府停摆风险"
+    },
+    "lending_standards_tighten": {
+        "triggers": ["bank_margin_pressure"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "贷款标准收紧"
+    },
+    "credit_freeze": {
+        "triggers": ["small_bank_stress"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "信贷冻结"
+    },
+    "panic_contagion": {
+        "triggers": ["bank_failure_risk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "恐慌传染"
+    },
+    "fed_emergency": {
+        "triggers": ["bank_failure_risk", "market_crash_risk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "Fed紧急干预"
+    },
+    "deposit_flight": {
+        "triggers": ["regional_bank_stress"],
+        "consequences": ["consumer_confidence_drop", "credit_freeze"],
+        "lag_months": {"consumer_confidence_drop": 2, "credit_freeze": 4},
+        "label": "存款搬家"
+    },
+    "bank_loss_provision": {
+        "triggers": ["bank_npl_concern", "corporate_default_rise"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "银行坏账拨备"
+    },
+    "social_unrest_risk": {
+        "triggers": ["political_discontent", "regional_recession_china"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "社会动荡风险"
+    },
+    "credit_rating_downgrade": {
+        "triggers": ["fiscal_deadlock_risk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "信用评级下调"
+    },
+    "brics_currency_push": {
+        "triggers": ["de_dollarization_talk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "金砖货币推进"
+    },
+    "tax_reform_pressure": {
+        "triggers": ["wealth_gap_alert"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "税制改革压力"
+    },
+    "policy_uncertainty": {
+        "triggers": ["political_discontent"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "政策不确定性"
+    },
+    "fiscal_profligacy": {
+        "triggers": ["populist_rise"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "财政纪律松弛"
+    },
+    "supply_chain_disruption": {
+        "triggers": ["trade_war_escalation"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "供应链断裂"
+    },
+    "currency_devaluation": {
+        "triggers": ["central_bank_independence_threat"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "货币贬值"
+    },
+    "inflation_expectations_unhinged": {
+        "triggers": ["central_bank_independence_threat"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "通胀预期失控"
+    },
+    "global_gdp_drag": {
+        "triggers": ["trade_war_escalation"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "全球增长拖累"
+    },
+    "currency_collapse": {
+        "triggers": ["bond_market_revolt"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "货币崩盘"
+    },
+    "austerity_forced": {
+        "triggers": ["sovereign_debt_crisis"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "强制紧缩"
+    },
+    "imf_intervention": {
+        "triggers": ["sovereign_debt_crisis"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "IMF干预"
+    },
+    "new_reserve_currency_race": {
+        "triggers": ["reserve_status_questioned"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "新储备货币竞赛"
+    },
+    "global_order_reshuffle": {
+        "triggers": ["reserve_status_questioned"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "全球秩序重组"
+    },
+    "retail_sales_decline": {
+        "triggers": ["consumer_spending_slow"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "零售下滑"
+    },
+    "gdp_slowdown": {
+        "triggers": ["consumer_spending_slow"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "GDP放缓"
+    },
+    "circuit_breaker_trigger": {
+        "triggers": ["market_crash_risk"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "熔断触发"
+    },
+    "saving_rate_rise": {
+        "triggers": ["consumer_confidence_drop"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "储蓄率上升"
+    },
+    "mortgage_default_rise": {
+        "triggers": ["home_price_decline", "unemployment_rise"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "房贷违约上升"
+    },
+    "global_recession_risk": {
+        "triggers": ["global_contagion"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "全球衰退风险"
     },
 }
 
@@ -369,6 +611,181 @@ def _check_condition(cond: str, indicators: dict) -> bool:
     return False
 
 
+def _check_condition_with_strength(cond: str, indicators: dict, trends: dict = None) -> tuple:
+    """V2: 检查条件 + 返回触发强度 (0-1)。
+
+    不仅判断是否触发，还返回"有多触发"：
+    - 刚过阈值 → 0.15~0.30 (弱触发，可能回摆)
+    - 深度穿越 → 0.60~1.00 (强触发，趋势确定)
+    - 逼近阈值 → 0.05~0.15 (预警，尚未触发但接近)
+
+    Args:
+        cond: 条件字符串如 'us_cpi > 3.5'
+        indicators: 当前指标值
+        trends: 可选趋势字典 {name: direction(±1) + velocity(0-1)}
+
+    Returns:
+        (is_triggered: bool, strength: float, detail: str)
+    """
+    if trends is None:
+        trends = {}
+
+    parts = cond.split()
+    if len(parts) == 1:
+        return (cond in indicators, 1.0 if cond in indicators else 0.0, "")
+
+    if len(parts) == 3:
+        name, op, threshold_str = parts
+        val = indicators.get(name)
+        if val is None:
+            return (False, 0.0, f"{name} 数据缺失")
+
+        threshold = float(threshold_str)
+        trend = trends.get(name, {})
+
+        # 计算距离（相对阈值的偏离比例）
+        if threshold != 0:
+            distance = (val - threshold) / abs(threshold)
+        else:
+            distance = val - threshold
+
+        # 根据操作符判断方向
+        if op == ">" or op == ">=":
+            if op == ">=":
+                is_met = val >= threshold
+            else:
+                is_met = val > threshold
+
+            if is_met:
+                # 已触发：强度取决于超过多少 + 趋势方向
+                strength = min(1.0, 0.15 + abs(distance) * 2.5)
+                # 趋势加成
+                if trend.get("direction", 0) > 0:
+                    strength = min(1.0, strength + 0.2 * trend.get("velocity", 0.5))
+                detail = f"{name}={val:.1f}(>{threshold}) 强度={strength:.0%}"
+            elif distance > -0.15:
+                # 逼近但未触发 (在阈值15%距离内)
+                strength = 0.05 + abs(distance) * 0.5
+                detail = f"{name}={val:.1f} 逼近{threshold}(距{abs(distance)*100:.0f}%)"
+            else:
+                strength = 0.0
+                detail = ""
+
+        elif op == "<" or op == "<=":
+            if op == "<=":
+                is_met = val <= threshold
+            else:
+                is_met = val < threshold
+
+            if is_met:
+                strength = min(1.0, 0.15 + abs(distance) * 2.5)
+                if trend.get("direction", 0) < 0:
+                    strength = min(1.0, strength + 0.2 * trend.get("velocity", 0.5))
+                detail = f"{name}={val:.1f}(<{threshold}) 强度={strength:.0%}"
+            elif distance < 0.15:
+                strength = 0.05 + abs(distance) * 0.5
+                detail = f"{name}={val:.1f} 逼近{threshold}(距{abs(distance)*100:.0f}%)"
+            else:
+                strength = 0.0
+                detail = ""
+
+        return (is_met, strength, detail)
+
+    return (False, 0.0, "")
+
+
+def _compute_trends() -> dict:
+    """从数据库计算各指标的短期趋势 (7天/30天方向和速度)。"""
+    import sqlite3
+    try:
+        conn = sqlite3.connect(str(Path(__file__).parent.parent / "macro.db"))
+        trends = {}
+        # 对每个有触发条件的指标，计算7日和30日斜率
+        indicators_of_interest = {
+            "us_cpi", "china_cpi", "us_unemployment", "china_unemployment",
+            "us_yield_curve", "gold", "china_debt_gdp", "china_pmi",
+            "us_political_polarization", "us_wealth_gap", "china_wealth_gap",
+            "us_sp500", "us_vixy", "us_fed_rate",
+        }
+        for ind in indicators_of_interest:
+            rows = conn.execute(
+                "SELECT value FROM macro_indicators WHERE indicator_name=? ORDER BY date DESC LIMIT 30",
+                (ind,)
+            ).fetchall()
+            if len(rows) >= 5:
+                values = [r[0] for r in rows]
+                recent_avg = sum(values[:5]) / len(values[:5])
+                older_avg = sum(values[-5:]) / len(values[-5:])
+                if older_avg != 0:
+                    direction = 1 if recent_avg > older_avg else -1
+                    velocity = min(1.0, abs(recent_avg - older_avg) / abs(older_avg) * 5)
+                    trends[ind] = {"direction": direction, "velocity": velocity}
+        conn.close()
+        return trends
+    except:
+        return {}
+
+
+def detect_triggers_v2() -> list[dict]:
+    """V2: 趋势感知触发检测 — 返回触发列表 + 强度 + 逼近预警。
+
+    Returns:
+        [{id, label, strength, is_approaching, detail}, ...]
+    """
+    snap = _snap()
+    indicators = {}
+    for k in snap:
+        val = snap[k].get("value")
+        if val is not None:
+            indicators[k] = val
+
+    trends = _compute_trends()
+    triggered = []
+
+    for node_id, node in CAUSAL_GRAPH.items():
+        prereqs = node.get("triggers", [])
+        if not prereqs:
+            continue
+
+        all_met = True
+        strengths = []
+        details = []
+        any_approaching = False
+
+        for p in prereqs:
+            is_met, strength, detail = _check_condition_with_strength(p, indicators, trends)
+            if not is_met:
+                if strength > 0.03:  # 逼近
+                    any_approaching = True
+                    details.append(detail)
+                all_met = False
+                break
+            strengths.append(strength)
+            if detail:
+                details.append(detail)
+
+        if all_met:
+            avg_strength = sum(strengths) / len(strengths) if strengths else 1.0
+            triggered.append({
+                "id": node_id,
+                "label": node.get("label", node_id),
+                "strength": round(avg_strength, 3),
+                "is_approaching": False,
+                "detail": "; ".join(details),
+            })
+        elif any_approaching:
+            # 添加为逼近预警
+            triggered.append({
+                "id": node_id,
+                "label": node.get("label", node_id),
+                "strength": 0.05,
+                "is_approaching": True,
+                "detail": "逼近: " + "; ".join(details),
+            })
+
+    return triggered
+
+
 # ═══════════════════════════════════════════════════════
 #  图遍历引擎
 # ═══════════════════════════════════════════════════════
@@ -407,9 +824,9 @@ def traverse(seed_events: list[str]) -> list[dict]:
         node = CAUSAL_GRAPH.get(event, {})
         prereqs = node.get("triggers", [])
 
-        # 对于非种子节点，检查先决条件
+        # 对于非种子节点，检查先决条件（OR 逻辑：任一触发即满足）
         if event not in seed_events:
-            if not all(_check_condition(p, indicators) for p in prereqs):
+            if prereqs and not any(_check_condition(p, indicators) for p in prereqs):
                 continue
 
         timeline.append({
