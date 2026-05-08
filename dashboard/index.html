@@ -528,12 +528,36 @@ body {
   </div>
 </div>
 
-<!-- ══════ 一句话总结 ══════ -->
+<!-- ══════ 综合总结报告 ══════ -->
 <div class="section">
-  <div class="chart-card" style="border-left:3px solid var(--accent-lime)">
-    <h3>📌 总结</h3>
-    <div id="summary-text" style="font-size:1.05rem;line-height:1.6;padding:8px 0"></div>
+  <div class="section-title">📌 综合总结报告</div>
+  <div class="chart-hint" id="summary-updated"></div>
+
+  <!-- 一句话总判 -->
+  <div class="chart-card" style="border-left:3px solid var(--accent-lime);margin-bottom:12px">
+    <div id="summary-verdict" style="font-size:1.1rem;font-weight:600;line-height:1.5"></div>
   </div>
+
+  <!-- 变化追踪 (delta) -->
+  <div class="chart-card" style="border-left:3px solid var(--accent-coral);margin-bottom:12px;display:none" id="summary-delta-card">
+    <h3>📈 本次更新变化</h3>
+    <div id="summary-delta" style="font-size:0.85rem;line-height:1.8"></div>
+  </div>
+
+  <!-- 详细分析 -->
+  <div class="chart-grid" style="grid-template-columns:1fr 1fr">
+    <div class="chart-card">
+      <h3>🔍 驱动力分析</h3>
+      <div id="summary-drivers" style="font-size:0.82rem;line-height:1.8"></div>
+    </div>
+    <div class="chart-card">
+      <h3>💰 配置建议</h3>
+      <div id="summary-allocation" style="font-size:0.82rem;line-height:1.8"></div>
+    </div>
+  </div>
+
+  <!-- 交叉验证 -->
+  <div id="summary-crossval" style="margin-top:8px;font-size:0.8rem;color:var(--text-muted)"></div>
 </div>
 
 
@@ -1570,12 +1594,141 @@ function renderSummary(O) {
   const tm = tpl.top_match || {};
   const diff = tpl.diff || '';
   const causal = O.causal || {};
-  
-  const text = `表面 AI 盛世，底下 ${causal.n_triggers||'?'} 链并发。` +
-    `${tm.name||'2013 Taper Tantrum'} 是最像的历史剧本——先崩后救。` +
-    `但这次债务更高、极化更深、合作更弱——「${diff||'比历史更危险'}」。`;
-  
-  document.getElementById('summary-text').textContent = text;
+  const cycle = O.cycle || {};
+  const short = cycle.short_term || {};
+  const long = cycle.long_term || {};
+  const empire = cycle.empire || {};
+  const syn = O.synthesis || {};
+  const stress = O.stress || {};
+  const narr = O.narrative || {};
+  const sd = O.system_dynamics || {};
+  const pt = sd.phase_transition || {};
+  const ts = DATA.time_series || {};
+  const riskScore = syn.risk_score || 50;
+  const bayesianScore = syn.risk_score_bayesian || riskScore;
+  const alloc = syn.allocation || {};
+  const contradicts = syn.cross_validations || [];
+
+  // ── Updated timestamp ──
+  document.getElementById('summary-updated').textContent =
+    '🕐 数据更新: ' + DATA.generated_at + ' · 风险得分: ' + riskScore.toFixed(0) + '/100 (贝叶斯: ' + bayesianScore.toFixed(0) + ')';
+
+  // ── Verdict ──
+  const riskColor = riskScore > 70 ? 'var(--danger)' : riskScore > 45 ? 'var(--warning)' : riskScore > 30 ? 'var(--accent-lime)' : 'var(--success)';
+  const triggers = (causal.active_triggers || []).slice(0, 4).map(t => t.label).join('、');
+  document.getElementById('summary-verdict').innerHTML =
+    `<span style="color:${riskColor};font-size:1.5rem">${riskScore > 70 ? '🔴' : riskScore > 45 ? '🟠' : riskScore > 30 ? '🟡' : '🟢'}</span> ` +
+    `<strong>${O.overall_assessment || '评估中...'}</strong>` +
+    `<div style="font-weight:400;font-size:0.82rem;color:var(--text-muted);margin-top:4px">` +
+    `当前阶段: ${O.phase_label} · 历史最似: ${tm.name || '?'} (${((tm.similarity||0)*100).toFixed(0)}%) · ` +
+    `${causal.n_triggers || 0}条因果链触发 · ${causal.n_future || 0}个未来节点` +
+    (triggers ? `<br>触发信号: ${triggers}` : '') +
+    `</div>`;
+
+  // ── Change Detection (localStorage) ──
+  const prev = (() => { try { return JSON.parse(localStorage.getItem('dalio_prev') || 'null'); } catch(e) { return null; } })();
+  const snap = {
+    risk: riskScore, phase: O.detected_phase, gold: (ts.gold||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    sp500: (ts.us_sp500||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    vix: (ts.us_vixy||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    fed: (ts.us_fed_rate||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    curve: (ts.us_yield_curve||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    reserve: (ts.usd_reserve_share||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    pmi: (ts.china_pmi||[[0,0]]).slice(-1)[0]?.[1] || 0,
+    trigs: causal.n_triggers || 0,
+    gen: DATA.generated_at,
+  };
+
+  const deltaEl = document.getElementById('summary-delta-card');
+  const deltaHtml = document.getElementById('summary-delta');
+  if (prev && prev.gen !== snap.gen) {
+    deltaEl.style.display = 'block';
+    const changes = [];
+    const fmt = (v, u) => typeof v === 'number' ? v.toFixed(u || 1) : v;
+    const arrow = (a, b, flip) => {
+      const d = a - b;
+      if (Math.abs(d) < 0.01) return '→';
+      if (flip) return d < 0 ? '↑' : '↓';
+      return d > 0 ? '↑' : '↓';
+    };
+    const color = (a, b, flip) => {
+      const d = (a - b) / (Math.abs(b) || 1);
+      if (Math.abs(d) < 0.01) return 'var(--text-muted)';
+      const bad = flip ? d < 0 : d > 0;
+      return bad ? 'var(--danger)' : 'var(--success)';
+    };
+
+    if (Math.abs(snap.risk - prev.risk) > 0.5)
+      changes.push(['🎯 风险得分', fmt(prev.risk) + ' → <b>' + fmt(snap.risk) + '</b> /100', color(snap.risk, prev.risk, true)]);
+    if (snap.phase !== prev.phase)
+      changes.push(['🔄 宏观阶段', prev.phase + ' → <b>' + snap.phase + '</b>', 'var(--accent-purple)']);
+    if (snap.trigs !== prev.trigs)
+      changes.push(['⛓️ 因果触发', prev.trigs + ' → <b>' + snap.trigs + '</b> 链', snap.trigs > prev.trigs ? 'var(--danger)' : 'var(--success)']);
+
+    const metrics = [
+      ['🥇 黄金 $', snap.gold, prev.gold, '↑', false],
+      ['📈 SP500', snap.sp500, prev.sp500, '', false],
+      ['😱 VIX', snap.vix, prev.vix, '', true],
+      ['🏦 Fed利率', snap.fed, prev.fed, '', false],
+      ['📉 利率曲线', snap.curve, prev.curve, '', false],
+      ['🌐 储备份额%', snap.reserve, prev.reserve, '↓', false],
+      ['🏭 中国PMI', snap.pmi, prev.pmi, '', false],
+    ];
+    metrics.forEach(([label, v, pv, trend, flip]) => {
+      if (Math.abs(v - pv) > 0.005 * Math.abs(pv || 1)) {
+        changes.push([label, fmt(pv, 2) + ' → <b>' + fmt(v, 2) + '</b>', color(v, pv, flip)]);
+      }
+    });
+
+    deltaHtml.innerHTML = changes.length > 0
+      ? changes.map(c => `<div><span style="color:${c[2]}">●</span> ${c[0]}: ${c[1]}</div>`).join('')
+      : '<div style="color:var(--text-muted)">无明显变化</div>';
+  } else if (!prev) {
+    deltaEl.style.display = 'block';
+    deltaHtml.innerHTML = '<div style="color:var(--text-muted)">首次加载，下次更新后将显示变化</div>';
+  } else {
+    deltaEl.style.display = 'none';
+  }
+  localStorage.setItem('dalio_prev', JSON.stringify(snap));
+
+  // ── Driving Forces ──
+  const weights = O.active_weights || {};
+  const wNames = { cycle: '周期', causal: '因果', template: '历史', stress: '压力', game: '博弈', narrative: '叙事', system: '系统', first_principles: '第一性' };
+  const topW = Object.entries(weights).sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+  const drivers = [
+    `📍 <b>阶段判定</b>: ${O.phase_label} — ${O.phase_description || ''}`,
+    `📊 <b>主导视角</b>: ${topW.map(([k, v]) => wNames[k] + '(' + (v * 100).toFixed(0) + '%)').join(' > ')}`,
+    `⚡ <b>风险来源</b>: ${(stress.top_risks || []).slice(0, 3).map(r => r.label + '(' + (r.probability * 100).toFixed(0) + '%)').join(' · ') || '无极端风险'}`,
+    `🔄 <b>周期位置</b>: 短期${short.stage || '?'} → 长期${long.stage || '?'} → 帝国${empire.stage || '?'}`,
+    `📖 <b>历史参照</b>: ${tm.name || '?'} (${((tm.similarity || 0) * 100).toFixed(0)}%匹配) — ${diff}`,
+    `🎲 <b>博弈推演</b>: ${(O.game_theory || {}).trajectory || '模拟中...'}`,
+    `📰 <b>市场情绪</b>: 牛熊比${((narr.bull_ratio || 0) * 100).toFixed(0)}% · 临界风险: ${narr.tipping_risk || '?'} · 背离${narr.divergence_score || 0}分`,
+    `⚙️ <b>系统健康</b>: ${sd.criticality || '?'} · 崩溃概率${((pt.systemic_collapse_probability || 0) * 100).toFixed(1)}% · A/S比${(pt.as_ratio || 0).toFixed(1)}`,
+  ];
+  document.getElementById('summary-drivers').innerHTML = drivers.map(d => `<div style="margin-bottom:6px">${d}</div>`).join('');
+
+  // ── Allocation ──
+  const allocItems = Object.entries(alloc).map(([asset, detail]) => {
+    const w = detail.weight || 0;
+    const bar = '█'.repeat(Math.round(w * 20)) + '░'.repeat(20 - Math.round(w * 20));
+    return `<div style="margin-bottom:8px">
+      <b>${asset.toUpperCase()}</b> <span style="color:var(--accent-lime)">${(w * 100).toFixed(0)}%</span>
+      <div style="font-family:monospace;font-size:0.65rem">${bar}</div>
+      <div style="font-size:0.7rem;color:var(--text-muted)">${detail.components || ''}</div>
+    </div>`;
+  });
+  document.getElementById('summary-allocation').innerHTML = allocItems.join('') ||
+    '<div style="color:var(--text-muted)">等待引擎输出...</div>';
+
+  // ── Cross-validation ──
+  const crossvalHtml = contradicts.map(c => {
+    const isWarn = c.includes('⚠️');
+    return `<div style="margin-bottom:4px;color:${isWarn ? 'var(--accent-coral)' : 'var(--accent-lime)'}">${isWarn ? '⚠️' : '✅'} ${c}</div>`;
+  }).join('');
+  document.getElementById('summary-crossval').innerHTML = crossvalHtml
+    ? '<div style="font-weight:600;margin-bottom:6px">🔗 视角交叉验证</div>' + crossvalHtml
+    : '';
 }
 
 /* ═══════════ Scenario Player ═══════════ */
