@@ -1,0 +1,27 @@
+[
+  {
+    "title": "DownloadClaude|Claudeby Anthropic",
+    "href": "https://claude.com/download",
+    "body": "DownloadClaudeapps for Mac, Windows, iOS, and Android.Installextensions for Chrome, Excel, PowerPoint, and Slack.TakeClaudeanywhere. Pair with thedesktopapp. iOS.Download."
+  },
+  {
+    "title": "InstallClaudeDesktop|ClaudeHelp Center",
+    "href": "https://support.claude.com/en/articles/10065433-install-claude-desktop",
+    "body": "InstallClaudeDesktop. Updated over a week ago. Table of contents.Once thedownloadis completed: Open the file to completeinstallation. LaunchClaudefrom your Applications folder (Mac) or Start menu (Windows). Sign in with your account to get started."
+  },
+  {
+    "title": "Download-ClaudeAI",
+    "href": "https://c-ai.chat/download/",
+    "body": "Download.ClaudeAI is available across every major platform — web,desktop, mobile, command line, browser extensions, and Office add-ins. No matter how you work, there is an official way to accessClaude. This page covers every option with direct links to get started."
+  },
+  {
+    "title": "InstallClaudeDesktopon Linux | Snap Store",
+    "href": "https://snapcraft.io/claudeai-desktop",
+    "body": "InstallClaudeDesktopon your Linux distribution. Choose your Linux distribution to get detailedinstallationinstructions."
+  },
+  {
+    "title": "GitHub - emsi/claude-desktop:ClaudeDesktopfor Debian-based...",
+    "href": "https://github.com/emsi/claude-desktop",
+    "body": "Build andinstallthe package ./install-claude-desktop.sh #. The script will automatically: # - Check for andinstallrequired dependencies # -Downloadand extract resources from the Windows version # - Create a proper Debian package # - Guide you throughinstallation."
+  }
+]

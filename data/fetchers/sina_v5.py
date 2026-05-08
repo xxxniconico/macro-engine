@@ -59,7 +59,7 @@ for code, name in [("gb_inx", "us_sp500"), ("gb_dji", "us_dow"), ("gb_ixic", "us
         print(f"  ✗ {name}: {e}")
 
 # ═══ 2. 贵金属 ═══
-print("[2/5] 贵金属...")
+print("[2/7] 贵金属...")
 try:
     d = parse(fetch("hf_XAU"))
     if "hf_XAU" in d and len(d["hf_XAU"]) > 0:
@@ -68,8 +68,30 @@ try:
 except Exception as e:
     print(f"  ✗ gold: {e}")
 
+# ═══ 2b. WTI 原油 (hf_CL) ═══
+print("[3/7] WTI 原油...")
+try:
+    d = parse(fetch("hf_CL"))
+    if "hf_CL" in d and len(d["hf_CL"]) > 0:
+        save("oil_wti", float(d["hf_CL"][0])); saved += 1
+        print(f"  ✓ oil_wti={d['hf_CL'][0]} 昨收={d['hf_CL'][7]}")
+except Exception as e:
+    print(f"  ✗ oil_wti: {e}")
+
+# ═══ 2c. 人民币汇率 (USDCNY) ═══
+print("[4/7] 人民币汇率...")
+try:
+    d = parse(fetch("USDCNY"))
+    if "USDCNY" in d and len(d["USDCNY"]) > 1:
+        # USDCNY: [0]=time, [1]=bid, [2]=ask, [3]=high, [5]=open, [6]=prev_close, [7]=low, [8]=last
+        v = float(d["USDCNY"][1])  # bid price
+        save("usd_cny", v); saved += 1
+        print(f"  ✓ usd_cny={v} (USD/CNY)")
+except Exception as e:
+    print(f"  ✗ usd_cny: {e}")
+
 # ═══ 3. 核心 ETF（SPY/TLT/GLD/USO）═══
-print("[3/5] 核心ETF...")
+print("[5/7] 核心ETF...")
 for code, name in [
     ("gb_spy", "us_spy"),
     ("gb_tlt", "us_tlt"),
@@ -86,7 +108,7 @@ for code, name in [
         print(f"  ✗ {name}: {e}")
 
 # ═══ 4. 宏观代理 ETF（新增）═══
-print("[4/5] 宏观代理ETF...")
+print("[6/7] 宏观代理ETF...")
 proxies = [
     ("gb_vixy", "us_vixy"),       # VIX 恐慌指数代理
     ("gb_uup",  "us_uup"),        # 美元 ETF（DXY 代理）
@@ -106,7 +128,7 @@ for code, name in proxies:
         print(f"  ✗ {name}: {e}")
 
 # ═══ 5. 利率曲线计算 ═══
-print("[5/5] 利率曲线...")
+print("[7/7] 利率曲线...")
 try:
     # SHY 和 IEF 的价格差 → 收益率曲线陡峭程度代理
     shy_data = parse(fetch("gb_shy"))
