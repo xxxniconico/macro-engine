@@ -16,7 +16,7 @@ from data.storage import get_snapshot, save_diagnosis, get_indicator_count
 
 # ═══════════════════════════════════════════════════════
 #  短期债务周期 (5-8年)
-#  权重: PMI 35% | CPI 20% | 失业 15% | 风险偏好 15% | 利率曲线 15%
+#  权重: PMI 30% | CPI 15% | 失业 15% | 风险偏好 15% | 利率曲线 15% | 能源 10%
 # ═══════════════════════════════════════════════════════
 
 def locate_short_term(snapshot: dict) -> dict:
@@ -31,18 +31,19 @@ def locate_short_term(snapshot: dict) -> dict:
     gold = snapshot.get("gold", {}).get("value")
     vixy = snapshot.get("us_vixy", {}).get("value")
     curve = snapshot.get("us_yield_curve", {}).get("value")
+    oil = snapshot.get("oil_wti", {}).get("value")       # ★ 新增: WTI 原油
 
-    # PMI — 权重最高 (35%)
+    # PMI — 权重 (30%)
     if pmi is not None:
-        w = 0.35; tw += w
+        w = 0.30; tw += w
         if pmi > 52:       score += w * 1.0;  sig["pmi"] = f"强扩张({pmi})"
         elif pmi > 50:     score += w * 0.5;  sig["pmi"] = f"弱扩张({pmi})"
         elif pmi > 48:     score += w * -0.3; sig["pmi"] = f"弱收缩({pmi})"
         else:              score += w * -1.0; sig["pmi"] = f"强收缩({pmi})"
 
-    # CPI (20%)
+    # CPI (15%)
     if cpi is not None:
-        w = 0.20; tw += w
+        w = 0.15; tw += w
         if cpi > 3:        score += w * -0.8; sig["cpi"] = f"高通胀({cpi}%)"
         elif cpi > 1.5:    score += w * 0.0;  sig["cpi"] = f"温和({cpi}%)"
         elif cpi < 0:      score += w * -0.5; sig["cpi"] = f"通缩({cpi}%)"
@@ -79,6 +80,15 @@ def locate_short_term(snapshot: dict) -> dict:
         elif curve > 0.95:     score += w * 0.0;  sig["curve"] = "正常"
         elif curve > 0.90:     score += w * -0.4; sig["curve"] = "平坦(警告)"
         else:                  score += w * -0.8; sig["curve"] = f"倒挂(衰退)({curve:.3f})"
+
+    # 能源价格 (10%) — WTI 原油作为通胀/需求代理信号
+    if oil is not None:
+        w = 0.10; tw += w
+        if oil > 110:       score += w * -0.7; sig["oil"] = f"过高({oil:.0f}$)"
+        elif oil > 85:      score += w * -0.2; sig["oil"] = f"偏高({oil:.0f}$)"
+        elif oil > 60:      score += w * 0.2;  sig["oil"] = f"健康({oil:.0f}$)"
+        elif oil > 40:      score += w * 0.0;  sig["oil"] = f"偏低({oil:.0f}$)"
+        else:               score += w * -0.4; sig["oil"] = f"危机({oil:.0f}$)"  # 极低油价 = 需求崩溃
 
     if tw == 0:
         return {"stage": "数据不足", "confidence": 0, "score": 0, "signals": {}, "data_quality": "0%"}
@@ -155,6 +165,7 @@ def locate_long_term(snapshot: dict) -> dict:
 
 # ═══════════════════════════════════════════════════════
 #  帝国/秩序周期 (~250年)
+#  权重: 储备份额 30% | 政治极化 20% | 贫富差距 25% | 人民币信心 10% | 新兴市场 15%
 # ═══════════════════════════════════════════════════════
 
 def locate_empire(snapshot: dict) -> dict:
@@ -163,16 +174,17 @@ def locate_empire(snapshot: dict) -> dict:
     rs = snapshot.get("usd_reserve_share", {}).get("value")
     pol = snapshot.get("us_political_polarization", {}).get("value")
     gap = snapshot.get("us_wealth_gap", {}).get("value")
+    cny = snapshot.get("usd_cny", {}).get("value")  # ★ 新增: 人民币汇率
 
     if rs is not None:
-        w = 0.35; tw += w
+        w = 0.30; tw += w
         if rs < 50:        score += w * -1.0; sig["reserve"] = f"<50%({rs:.0f})"
         elif rs < 58:      score += w * -0.5; sig["reserve"] = f"↓({rs:.0f}%)"
         elif rs > 65:      score += w * 0.5;  sig["reserve"] = f"稳固({rs:.0f}%)"
         else:              score += w * 0;    sig["reserve"] = f"正常({rs:.0f}%)"
 
     if pol is not None:
-        w = 0.25; tw += w
+        w = 0.20; tw += w
         if pol > 80:       score += w * -1.0; sig["polar"] = f"极度({pol})"
         elif pol > 60:     score += w * -0.5; sig["polar"] = f"高({pol})"
         else:              score += w * 0;    sig["polar"] = f"正常({pol})"
@@ -191,6 +203,14 @@ def locate_empire(snapshot: dict) -> dict:
         if eem > 70:       score += w * -0.3; sig["em"] = f"强劲({eem})"
         elif eem > 55:     score += w * 0.0;  sig["em"] = f"正常({eem})"
         else:              score += w * 0.2;  sig["em"] = f"疲弱({eem})"
+
+    # 人民币汇率 (10%) — CNY 贬值 = 资本外流 + 去美元化压力
+    if cny is not None:
+        w = 0.10; tw += w
+        if cny > 7.3:      score += w * -0.8; sig["cny"] = f"急贬({cny})"
+        elif cny > 7.0:    score += w * -0.3; sig["cny"] = f"走弱({cny})"
+        elif cny > 6.5:    score += w * 0.0;  sig["cny"] = f"稳定({cny})"
+        else:              score += w * 0.2;  sig["cny"] = f"走强({cny})"
 
     if tw == 0:
         return {"stage": "数据不足", "confidence": 0, "score": 0, "signals": {}, "data_quality": "0%"}

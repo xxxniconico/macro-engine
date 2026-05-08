@@ -211,6 +211,18 @@ CAUSAL_GRAPH = {
         "lag_months": {"inflation_imported": 3, "commodity_exporters_boom": 2},
         "label": "商品价格飙升"
     },
+    "oil_shock": {
+        "triggers": ["oil_wti > 110"],
+        "consequences": ["inflation_imported", "consumer_pain", "fed_hike"],
+        "lag_months": {"inflation_imported": 1, "consumer_pain": 3, "fed_hike": 2},
+        "label": "油价冲击"
+    },
+    "oil_collapse": {
+        "triggers": ["oil_wti < 40"],
+        "consequences": ["commodity_exporters_stress", "energy_sector_default_risk", "global_recession_risk"],
+        "lag_months": {"commodity_exporters_stress": 2, "energy_sector_default_risk": 6, "global_recession_risk": 12},
+        "label": "油价暴跌"
+    },
 
     # ── 政治/社会 ──
     "political_discontent": {
@@ -282,6 +294,18 @@ CAUSAL_GRAPH = {
         "consequences": ["alternative_reserve_search", "brics_currency_push"],
         "lag_months": {"alternative_reserve_search": 6, "brics_currency_push": 12},
         "label": "去美元化讨论"
+    },
+    "cny_depreciation": {
+        "triggers": ["usd_cny > 7.3"],
+        "consequences": ["china_capital_outflow", "pboc_intervention", "em_currency_contagion"],
+        "lag_months": {"china_capital_outflow": 2, "pboc_intervention": 0, "em_currency_contagion": 4},
+        "label": "人民币急贬"
+    },
+    "china_capital_outflow": {
+        "triggers": ["cny_depreciation"],
+        "consequences": ["china_stock_pressure", "china_bond_selloff", "fx_reserve_decline"],
+        "lag_months": {"china_stock_pressure": 1, "china_bond_selloff": 2, "fx_reserve_decline": 3},
+        "label": "中国资本外流"
     },
 
     # ── 中国债务（新增）──
@@ -360,6 +384,43 @@ CAUSAL_GRAPH = {
         "consequences": [],
         "lag_months": {},
         "label": "避险资产涌入"
+    },
+    # ── 新增叶子节点（油价/人民币连锁链终点）──
+    "pboc_intervention": {
+        "triggers": ["cny_depreciation"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "央行干预汇市"
+    },
+    "em_currency_contagion": {
+        "triggers": ["cny_depreciation"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "新兴货币传染"
+    },
+    "china_stock_pressure": {
+        "triggers": ["china_capital_outflow"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "A股承压"
+    },
+    "china_bond_selloff": {
+        "triggers": ["china_capital_outflow"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "中国债市抛售"
+    },
+    "fx_reserve_decline": {
+        "triggers": ["china_capital_outflow"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "外储下降"
+    },
+    "energy_sector_default_risk": {
+        "triggers": ["oil_collapse"],
+        "consequences": [],
+        "lag_months": {},
+        "label": "能源企业违约风险"
     },
     "fed_hike_pressure": {
         "triggers": ["inflation_fear", "inflation_imported"],
