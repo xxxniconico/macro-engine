@@ -536,19 +536,6 @@ body {
   </div>
 </div>
 
-<!-- ══════ 深度综合诊断 ══════ -->
-<div class="section">
-  <div class="section-title">🔬 综合诊断</div>
-  
-  <!-- Core contradiction -->
-  <div id="core-contradiction" class="warning-box" style="margin-bottom:16px;font-size:0.9rem"></div>
-
-  <!-- Divergence alerts -->
-  <div id="divergence-alerts" style="margin-bottom:16px"></div>
-
-  <!-- Key numbers row -->
-  <div class="metrics-row" id="diagnosis-kpis"></div>
-</div>
 
 <div style="text-align:center;padding:32px 0 20px;color:var(--text-muted);font-size:0.72rem;border-top:1px solid var(--border);margin-top:32px;display:flex;justify-content:center;align-items:center;gap:24px;flex-wrap:wrap">
   <span>🔮 Dalio Macro Engine V7</span>
@@ -1517,35 +1504,10 @@ function renderDiagnosis(O) {
   const sd = O.system_dynamics || {};
   const pt = sd.phase_transition || {};
   const syn = O.synthesis || {};
-  const stress = O.stress || {};
-  const ts = DATA.time_series || {};
 
   // Phase description
   document.getElementById('diagnosis-phase-desc').textContent =
     (O.detected_phase||'?') + ' · ' + (O.phase_label||'') + ' · 风险 ' + (syn.risk_score||'?').toFixed(0) + '/100';
-
-  // Core contradiction
-  const contradicts = syn.cross_validations || [];
-  document.getElementById('core-contradiction').innerHTML =
-    '<strong>⚡ 核心矛盾</strong>: ' + (contradicts[0]||'待引擎运行后生成') +
-    (contradicts.length>1 ? '<br>' + contradicts.slice(1).join('<br>') : '');
-
-  // Divergence alerts
-  const div = O.divergence || {};
-  const divergences = div.divergences || [];
-  if (divergences.length > 0) {
-    document.getElementById('divergence-alerts').innerHTML =
-      '<div class="chart-card" style="border-left:3px solid var(--accent-coral)">' +
-      '<h3>⚡ 指标背离检测 <span style="color:var(--text-muted);font-size:0.75rem">' + (div.summary||'') + '</span></h3>' +
-      divergences.map(d => {
-        const sevColor = d.severity==='critical'?'var(--danger)':d.severity==='warning'?'var(--warning)':'var(--success)';
-        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.82rem">' +
-          '<span style="color:'+sevColor+'">'+d.type+'</span>' +
-          '<div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px">'+d.detail+'</div></div>';
-      }).join('') + '</div>';
-  } else {
-    document.getElementById('divergence-alerts').innerHTML = '';
-  }
 
   // Status overview table
   const short = cycle.short_term || {};
@@ -1600,23 +1562,6 @@ function renderDiagnosis(O) {
       <td style="font-size:0.78rem">${r.conf||''}</td>
     </tr>`
   ).join('');
-
-  // KPI row
-  const last = (key) => (ts[key]||[[0,0]]).slice(-1)[0]?.[1]?.toFixed(2) || '?';
-  const gold = (ts.gold||[[0,0]]).slice(-1)[0]?.[1] || '?';
-  const vix = (ts.us_vixy||[[0,0]]).slice(-1)[0]?.[1] || '?';
-  const sp = (ts.us_sp500||[[0,0]]).slice(-1)[0]?.[1] || '?';
-  const debt = (ts.us_debt_gdp||ts.china_debt_gdp||[[0,0]]).slice(-1)[0]?.[1] || '?';
-  const reserve = (ts.usd_reserve_share||[[0,0]]).slice(-1)[0]?.[1] || '?';
-
-  document.getElementById('diagnosis-kpis').innerHTML = [
-    {label:'🇺🇸 S&P 500',val:sp,sub:''},
-    {label:'🥇 黄金',val:'$'+Math.round(gold),sub:'年涨+46%'},
-    {label:'😱 VIX',val:vix,sub:''},
-    {label:'💸 债务/GDP',val:Math.round(debt)+'%',sub:''},
-    {label:'🌐 储备份额',val:Math.round(reserve)+'%',sub:''},
-    {label:'📈 压力告警',val:stress.n_alerts||0,sub:stress.n_scenarios+'场景'},
-  ].map(m => `<div class="metric-card"><div class="label">${m.label}</div><div class="value">${m.val}</div><div class="sub">${m.sub}</div></div>`).join('');
 }
 
 /* ═══════════ Summary ═══════════ */
