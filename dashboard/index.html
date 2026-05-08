@@ -399,6 +399,9 @@ body {
       <div class="chart-card"><h3>VIX 恐慌指数</h3><canvas id="chart-vix"></canvas></div>
       <div class="chart-card"><h3>黄金 ($/oz)</h3><canvas id="chart-gold"></canvas></div>
       <div class="chart-card"><h3>利率曲线 (2Y/10Y)</h3><canvas id="chart-curve"></canvas></div>
+      <div class="chart-card"><h3>🛢️ WTI 原油 ($/桶)</h3><div class="chart-hint">新浪 hf_CL · 日频</div><canvas id="chart-oil"></canvas></div>
+      <div class="chart-card"><h3>💵 美元指数 (UUP 代理)</h3><div class="chart-hint">新浪 gb_uup · DXY 代理 ETF · 日频</div><canvas id="chart-uup"></canvas></div>
+      <div class="chart-card"><h3>🇨🇳 人民币汇率 USD/CNY</h3><div class="chart-hint">新浪 USDCNY · 在岸即期 · 日频</div><canvas id="chart-cny"></canvas></div>
     </div>
   </div>
   
@@ -787,7 +790,19 @@ function renderAll() {
   makeLineChart('chart-curve', [
     {label:'2Y/10Y利差',data:getSeries(['us_yield_curve']),color:'#c2ef4e'},
   ]);
-  
+
+  makeLineChart('chart-oil', [
+    {label:'WTI原油 $/桶',data:getSeries(['oil_wti']),color:'#ff9b6e'},
+  ]);
+
+  makeLineChart('chart-uup', [
+    {label:'美元UUP $',data:getSeries(['us_uup']),color:'#7c6ff7'},
+  ]);
+
+  makeLineChart('chart-cny', [
+    {label:'USD/CNY',data:getSeries(['usd_cny']),color:'#b8f53e'},
+  ]);
+
   makeLineChart('chart-reserve', [
     {label:'美元储备份额%',data:getSeries(['usd_reserve_share']),color:'#6a5fc1'},
   ]);
