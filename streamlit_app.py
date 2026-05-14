@@ -22,19 +22,26 @@ with open(data_path) as f:
 with open(html_path) as f:
     html = f.read()
 
-# Inject data before the loadData() call — replace the fetch with inline data
-injection = f"""
-<script>
-// Injected by Streamlit wrapper — replaces fetch('data.json')
-window._DALIO_DATA = {json.dumps(data)};
+# Inject data as a complete mock Response object
+data_json = json.dumps(data, ensure_ascii=False)
+injection = f"""<script>
+window._DALIO_DATA_JSON = {json.dumps(data_json)};
 </script>
 """
-# Replace the loadData function to use injected data instead of fetch
-old_fetch = '    const resp = await fetch(\'data.json?\' + Date.now());'
-new_fetch = 'const resp = { json: () => Promise.resolve(window._DALIO_DATA) };'
+
+# Replace fetch('data.json?...') with a complete mock that has .status, .ok, .text()
+old_fetch = "fetch('data.json?' + Date.now())"
+new_fetch = """{
+    status: 200,
+    ok: true,
+    json: function() { return Promise.resolve(window._DALIO_DATA); },
+    text: function() { return Promise.resolve(window._DALIO_DATA_JSON); }
+}"""
 html = html.replace(old_fetch, new_fetch)
 
-# Insert injection before </head>
-html = html.replace('</head>', injection + '\n</head>')
+# Also inject the parsed data (for json() calls)
+# We need to store the full object AND the JSON string
+html = html.replace('</head>',
+    injection + '\n<script>window._DALIO_DATA = ' + json.dumps(data, ensure_ascii=False) + ';</script>\n</head>')
 
 st.components.v1.html(html, height=2200, scrolling=True)
