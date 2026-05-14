@@ -30,7 +30,7 @@ window._DALIO_DATA = {json.dumps(data)};
 </script>
 """
 # Replace the loadData function to use injected data instead of fetch
-old_fetch = 'const resp = await fetch(\'data.json?\' + Date.now());'
+old_fetch = '    const resp = await fetch(\'data.json?\' + Date.now());'
 new_fetch = 'const resp = { json: () => Promise.resolve(window._DALIO_DATA) };'
 html = html.replace(old_fetch, new_fetch)
 
