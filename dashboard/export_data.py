@@ -42,6 +42,7 @@ def export_time_series() -> dict:
             'us_real_rate',
             'gold', 'credit_spread', 'em_eem', 'us_pmi',
             'oil_wti', 'usd_cny', 'us_uup',
+            'us_vix', 'us_m2', 'us_10y_treasury', 'us_2y_treasury', 'us_dollar_index',
             'china_real_rate', 'china_military', 'china_education',
             'china_wealth_gap',
             'geopolitical_risk', 'us_epu', 'china_epu', 'global_shadow_banking',

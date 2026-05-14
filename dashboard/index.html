@@ -387,9 +387,9 @@ body {
   <div class="tab-content active" id="tab-macro">
     <div class="chart-grid">
       <div class="chart-card"><h3>PMI 制造业</h3><canvas id="chart-pmi"></canvas></div>
-      <div class="chart-card"><h3>CPI 通胀</h3><canvas id="chart-cpi"></canvas></div>
-      <div class="chart-card"><h3>GDP 增速</h3><canvas id="chart-gdp"></canvas></div>
-      <div class="chart-card"><h3>失业率</h3><canvas id="chart-unemp"></canvas></div>
+      <div class="chart-card"><h3>CPI 通胀 YoY%</h3><div class="chart-hint">FRED CPIAUCSL · 月频 · 1948至今</div><canvas id="chart-cpi"></canvas></div>
+      <div class="chart-card"><h3>GDP 增速 SAAR%</h3><div class="chart-hint">FRED · 季频 · 1947至今</div><canvas id="chart-gdp"></canvas></div>
+      <div class="chart-card"><h3>失业率 %</h3><div class="chart-hint">FRED UNRATE · 月频 · 1948至今</div><canvas id="chart-unemp"></canvas></div>
     </div>
   </div>
   
@@ -398,10 +398,11 @@ body {
       <div class="chart-card"><h3>标普500</h3><canvas id="chart-sp500"></canvas></div>
       <div class="chart-card"><h3>VIX 恐慌指数</h3><canvas id="chart-vix"></canvas></div>
       <div class="chart-card"><h3>黄金 ($/oz)</h3><canvas id="chart-gold"></canvas></div>
-      <div class="chart-card"><h3>利率曲线 (2Y/10Y)</h3><canvas id="chart-curve"></canvas></div>
+      <div class="chart-card"><h3>利率曲线 10Y-2Y (T10Y2Y)</h3><div class="chart-hint">FRED · 真实利差 · 日频 → 月均</div><canvas id="chart-curve"></canvas></div>
       <div class="chart-card"><h3>🛢️ WTI 原油 ($/桶)</h3><div class="chart-hint">新浪 hf_CL · 日频</div><canvas id="chart-oil"></canvas></div>
       <div class="chart-card"><h3>💵 美元指数 (UUP 代理)</h3><div class="chart-hint">新浪 gb_uup · DXY 代理 ETF · 日频</div><canvas id="chart-uup"></canvas></div>
       <div class="chart-card"><h3>🇨🇳 人民币汇率 USD/CNY</h3><div class="chart-hint">新浪 USDCNY · 在岸即期 · 日频</div><canvas id="chart-cny"></canvas></div>
+      <div class="chart-card"><h3>💵 M2 货币供应 (万亿美元)</h3><div class="chart-hint">FRED M2SL · 月度 · 1959至今</div><canvas id="chart-m2"></canvas></div>
     </div>
   </div>
   
@@ -410,7 +411,7 @@ body {
       <div class="chart-card"><h3>美元储备份额</h3><canvas id="chart-reserve"></canvas></div>
       <div class="chart-card"><h3>Gini 系数</h3><canvas id="chart-gini"></canvas></div>
       <div class="chart-card"><h3>中国实际利率</h3><div class="chart-hint">WB: 贷款利率 − CPI，年频</div><canvas id="chart-cn-realrate"></canvas></div>
-      <div class="chart-card"><h3>Fed 利率</h3><canvas id="chart-fed"></canvas></div>
+      <div class="chart-card"><h3>Fed 利率 %</h3><div class="chart-hint">FRED DFF · 日频 → 月均 · 1954至今</div><canvas id="chart-fed"></canvas></div>
       <div class="chart-card"><h3>中国军费/GDP</h3><div class="chart-hint">World Bank — 帝国周期核心指标</div><canvas id="chart-cn-mil"></canvas></div>
       <div class="chart-card"><h3>中国教育支出/GDP</h3><div class="chart-hint">World Bank — Dalio 8大力量指标</div><canvas id="chart-cn-edu"></canvas></div>
       <div class="chart-card"><h3>上证指数</h3><canvas id="chart-sh"></canvas></div>
@@ -780,7 +781,8 @@ function renderAll() {
   ]);
   
   makeLineChart('chart-vix', [
-    {label:'VIX',data:getSeries(['us_vixy']),color:'#fa7faa'},
+    {label:'VIX (FRED 真实)',data:getSeries(['us_vix']),color:'#fa7faa'},
+    {label:'VIXY ETF (旧)',data:getSeries(['us_vixy']),color:'rgba(250,127,170,0.25)',dashed:true},
   ]);
   
   makeLineChart('chart-gold', [
@@ -801,6 +803,10 @@ function renderAll() {
 
   makeLineChart('chart-cny', [
     {label:'USD/CNY',data:getSeries(['usd_cny']),color:'#b8f53e'},
+  ]);
+
+  makeLineChart('chart-m2', [
+    {label:'M2 (万亿$)',data:(DATA.time_series.us_m2||[]).map(p=>[p[0],p[1]/1000]),color:'#c2ef4e'},
   ]);
 
   makeLineChart('chart-reserve', [
